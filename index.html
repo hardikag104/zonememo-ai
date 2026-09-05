@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ZoneMemo AI — Automated US Zoning & Feasibility Due Diligence</title>
+    <title>ZoneMemo AI — Institutional US Zoning Feasibility Studio</title>
+    
+    <!-- Google Fonts: Newsreader (Editorial Serif), Inter (Clean Sans), JetBrains Mono (Technical Mono) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap" rel="stylesheet">
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -12,885 +18,1280 @@
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            500: '#10b981',
-                            600: '#059669',
-                            700: '#047857',
+                        paper: {
+                            DEFAULT: '#f6f3eb',
+                            top: '#f9f7f2',
+                            panel: '#ffffff',
+                            alt: '#efeae0',
+                            border: 'rgba(21, 18, 14, 0.12)',
+                            borderStrong: 'rgba(21, 18, 14, 0.22)'
                         },
-                        navy: {
-                            800: '#0f172a',
-                            900: '#0a0f1d',
-                            950: '#050811',
+                        ink: {
+                            DEFAULT: '#15120e',
+                            soft: '#2e2a24',
+                            muted: '#686257',
+                            faint: '#9a9489'
+                        },
+                        accent: {
+                            DEFAULT: '#1b4332',      /* Architectural Forest Slate */
+                            deep: '#0d281e',
+                            light: '#e8f0eb',
+                            indigo: '#1e3a5f',
+                            bronze: '#8c6239',
+                            bronzeLight: '#f5efe6',
+                            rust: '#b84a39'
                         }
+                    },
+                    fontFamily: {
+                        serif: ['"Newsreader"', '"Instrument Serif"', 'Georgia', 'serif'],
+                        display: ['"Instrument Serif"', 'Georgia', 'serif'],
+                        sans: ['"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
                     }
                 }
             }
         }
     </script>
-    <!-- Lucide Icons -->
+    
+    <!-- Lucide Icons CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Leaflet CSS & JS for Interactive Map -->
+    
+    <!-- Leaflet GIS Map CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-        body { font-family: 'Inter', sans-serif; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        #map { height: 480px; width: 100%; border-radius: 0.75rem; z-index: 10; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f6f3eb;
+            color: #15120e;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Subtle tactile paper noise texture matching Shyft Studio */
+        .paper-grain {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23t)' opacity='0.04'/%3E%3C/svg%3E");
+        }
+
+        /* Architectural technical grid overlay */
+        .blueprint-grid {
+            background-size: 32px 32px;
+            background-image: 
+                linear-gradient(to right, rgba(21, 18, 14, 0.035) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(21, 18, 14, 0.035) 1px, transparent 1px);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f6f3eb; }
+        ::-webkit-scrollbar-thumb { background: #cfc8ba; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a69f90; }
+
+        /* Map styling */
+        #parcel-map {
+            height: 440px;
+            width: 100%;
+            border-radius: 6px;
+            z-index: 10;
+        }
+
+        /* Print / Institutional Memo Export Stylesheet */
         @media print {
-            body * { visibility: hidden; }
-            #print-memo, #print-memo * { visibility: visible; }
-            #print-memo { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
+            body { background: white !important; color: black !important; }
             .no-print { display: none !important; }
+            #print-institutional-memo { display: block !important; visibility: visible !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+            .page-break { page-break-after: always; }
         }
     </style>
 </head>
-<body class="bg-navy-950 text-slate-100 antialiased selection:bg-brand-500 selection:text-white">
+<body class="selection:bg-accent selection:text-white relative min-h-screen">
 
-    <!-- Top Navigation -->
-    <nav class="sticky top-0 z-50 bg-navy-900/90 backdrop-blur-md border-b border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-3">
-                    <div class="w-9 h-9 bg-brand-500 rounded-lg flex items-center justify-center shadow-lg shadow-brand-500/20">
-                        <i data-lucide="building-2" class="w-5 h-5 text-navy-950 font-bold"></i>
-                    </div>
-                    <span class="text-xl font-extrabold tracking-tight text-white">Zone<span class="text-brand-500">Memo</span><span class="text-xs ml-1.5 px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-mono">AI</span></span>
+    <!-- Paper Grain Texture Layer -->
+    <div class="pointer-events-none fixed inset-0 -z-10 paper-grain"></div>
+    <div class="pointer-events-none fixed inset-0 -z-10 blueprint-grid"></div>
+
+    <!-- Editorial Header (Shyft Studio Inspired) -->
+    <header class="sticky top-0 z-40 border-b border-paper-border bg-paper-top/90 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
+            <a href="#" class="inline-flex items-center gap-3 no-underline group">
+                <span class="inline-flex h-8 w-8 items-center justify-center rounded border border-ink/20 bg-paper-panel shadow-sm text-accent">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                        <path d="M3 21h18M3 7l9-4 9 4M4 7v14M20 7v14M9 21v-8a3 3 0 0 1 6 0v8M9 7h6"></path>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-mono text-sm font-semibold tracking-tight text-ink">
+                        ZoneMemo <span class="text-accent font-serif italic font-normal text-base">Studio</span>
+                    </span>
+                    <span class="font-mono text-[10px] tracking-widest uppercase text-ink-muted">US Zoning Intelligence</span>
                 </div>
-                <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
-                    <a href="#demo" class="hover:text-white transition">Live Austin Demo</a>
-                    <a href="#how-it-works" class="hover:text-white transition">How It Works</a>
-                    <a href="#comparison" class="hover:text-white transition">Why ZoneMemo</a>
-                    <a href="#pricing" class="hover:text-white transition">Pricing</a>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="#demo" class="px-4 py-2 rounded-lg bg-brand-500 hover:bg-brand-600 text-navy-950 font-semibold text-sm transition shadow-md shadow-brand-500/20 flex items-center space-x-2">
-                        <span>Analyze a Parcel</span>
-                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                    </a>
-                </div>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="hidden md:flex items-center gap-8 font-mono text-[12.5px] tracking-wide text-ink-muted">
+                <a href="#gap" class="hover:text-ink transition-colors">01 The Gap</a>
+                <a href="#engine" class="hover:text-ink transition-colors">02 Live Engine</a>
+                <a href="#database" class="hover:text-ink transition-colors">03 US Cadastre</a>
+                <a href="#matrix" class="hover:text-ink transition-colors">04 Red-Flag Audit</a>
+                <a href="#pricing" class="hover:text-ink transition-colors">05 Access</a>
+            </nav>
+
+            <!-- CTA Actions -->
+            <div class="flex items-center gap-3">
+                <button onclick="openMemoModal()" class="hidden sm:inline-flex items-center gap-2 font-mono text-[12px] tracking-wider uppercase px-3.5 py-2 rounded border border-paper-borderStrong bg-transparent hover:bg-paper-panel text-ink transition-all">
+                    <span>Sample Memo</span>
+                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                </button>
+                <a href="#engine" class="inline-flex items-center gap-2 font-mono text-[12.5px] font-medium tracking-wide px-4 py-2 rounded bg-accent text-white hover:bg-accent-deep transition-all shadow-sm">
+                    <span>Triage Deal</span>
+                    <span aria-hidden="true">→</span>
+                </a>
             </div>
         </div>
-    </nav>
+    </header>
 
     <!-- Hero Section -->
-    <section class="relative pt-20 pb-16 overflow-hidden">
-        <div class="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.15),rgba(255,255,255,0))]"></div>
-        <div class="max-w-5xl mx-auto px-4 text-center relative z-10">
-            <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-semibold text-brand-400 mb-6">
-                <span class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></span>
-                <span>NOW LIVE: AUSTIN, TEXAS (TRAVIS COUNTY CADASTRE)</span>
-            </div>
-            <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight mb-6">
-                Turn 800-Page City Zoning Codes Into a <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-emerald-200">5-Page Feasibility Memo</span> in 60 Seconds
-            </h1>
-            <p class="text-lg sm:text-xl text-slate-300 max-w-3xl mx-auto mb-10 leading-relaxed">
-                Stop waiting 2 weeks for land-use attorneys. Instantly screen setbacks, by-right permitted uses, maximum building height, and Stacked FAR for any parcel before submitting your LOI.
-            </p>
-
-            <!-- Quick Address Search Bar -->
-            <div class="max-w-3xl mx-auto bg-navy-900/90 border border-slate-700 p-2 rounded-2xl shadow-2xl shadow-black/50">
-                <div class="flex flex-col sm:flex-row items-center gap-2">
-                    <div class="flex items-center pl-3 w-full">
-                        <i data-lucide="map-pin" class="w-5 h-5 text-brand-500 mr-2 shrink-0"></i>
-                        <input id="search-input" type="text" value="1201 E 6th St, Austin, TX 78702" placeholder="Enter Austin, TX address or Travis APN..." 
-                            class="w-full bg-transparent text-white placeholder-slate-500 focus:outline-none py-2 text-sm sm:text-base font-medium">
-                    </div>
-                    <button id="analyze-btn" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-navy-950 font-bold text-sm transition shrink-0 flex items-center justify-center space-x-2">
-                        <i data-lucide="sparkles" class="w-4 h-4"></i>
-                        <span>Generate Memo</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Pre-Loaded Sample Parcels -->
-            <div class="mt-4 flex flex-wrap justify-center items-center gap-2 text-xs text-slate-400">
-                <span>Try sample parcels:</span>
-                <button onclick="loadParcel('1201-e-6th')" class="px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">📍 1201 E 6th St (CS-MU)</button>
-                <button onclick="loadParcel('2100-s-congress')" class="px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">📍 2100 S Congress (GR-MU)</button>
-                <button onclick="loadParcel('4800-e-7th')" class="px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">📍 4800 E 7th St (CS-CO-NP)</button>
-            </div>
-        </div>
-    </section>
-
-    <!-- Live Interactive Parcel Explorer (The Core Product) -->
-    <section id="demo" class="py-12 bg-navy-900 border-y border-slate-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
-                <div>
-                    <h2 class="text-2xl sm:text-3xl font-bold text-white">Interactive Parcel Intelligence</h2>
-                    <p class="text-slate-400 text-sm mt-1">Real-time Travis County GIS parcel boundary with deterministic Austin Title 25 zoning calculations.</p>
-                </div>
-                <button onclick="openMemoModal()" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm border border-slate-600 transition flex items-center space-x-2">
-                    <i data-lucide="file-text" class="w-4 h-4 text-brand-400"></i>
-                    <span>Preview 5-Page Feasibility Memo (PDF)</span>
-                </button>
-            </div>
-
-            <!-- Grid: Map on Left, Intelligence Dossier on Right -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                
-                <!-- Left: Map Container (6 Cols) -->
-                <div class="lg:col-span-6 bg-navy-950 p-3 rounded-2xl border border-slate-800 shadow-xl">
-                    <div class="flex justify-between items-center px-2 py-1 mb-2 text-xs font-mono text-slate-400">
-                        <span id="map-coords">TRAVIS COUNTY CADASTRE — EPSG:4326</span>
-                        <div class="flex items-center space-x-2">
-                            <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-sm bg-brand-500 inline-block mr-1"></span> Parcel</span>
-                            <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block mr-1"></span> Setback Buffer</span>
-                        </div>
-                    </div>
-                    <div id="map"></div>
-                    <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-                        <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                            <div class="text-slate-400">Lot Area</div>
-                            <div id="lot-area" class="font-mono font-bold text-white text-sm">18,450 sq ft</div>
-                        </div>
-                        <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                            <div class="text-slate-400">Acreage</div>
-                            <div id="lot-acres" class="font-mono font-bold text-white text-sm">0.423 Acres</div>
-                        </div>
-                        <div class="bg-slate-900/80 p-2 rounded-lg border border-slate-800">
-                            <div class="text-slate-400">Frontage</div>
-                            <div id="lot-frontage" class="font-mono font-bold text-white text-sm">125 ft (E 6th)</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right: Intelligence Dossier (6 Cols) -->
-                <div class="lg:col-span-6 bg-navy-950 p-6 rounded-2xl border border-slate-800 shadow-xl space-y-6">
-                    
-                    <!-- Property Title & Badges -->
-                    <div>
-                        <div class="flex items-center justify-between">
-                            <span id="parcel-apn" class="text-xs font-mono px-2.5 py-1 rounded bg-slate-800 text-slate-300">APN: 0204050801</span>
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i> Highly Viable Development Site
-                            </span>
-                        </div>
-                        <h3 id="parcel-address" class="text-xl font-bold text-white mt-2">1201 E 6th St, Austin, TX 78702</h3>
-                        <p class="text-slate-400 text-xs mt-0.5">Jurisdiction: City of Austin | Watershed: Urban (Lady Bird Lake)</p>
+    <main class="no-print">
+        <section class="relative pt-16 pb-20 md:pt-24 md:pb-28 border-b border-paper-border">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="flex flex-col max-w-4xl">
+                    <!-- Mono Category Badge -->
+                    <div class="inline-flex items-center gap-2 font-mono text-[11.5px] tracking-[0.16em] uppercase text-accent mb-6">
+                        <span class="inline-block w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+                        Deterministic Municipal Code & Feasibility OS
                     </div>
 
-                    <!-- Zoning Matrix Highlights -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-                            <span class="text-xs text-slate-400 block">Base Zoning</span>
-                            <span id="zoning-code" class="text-base font-bold text-brand-400 font-mono">CS-MU-CO-NP</span>
-                            <span class="text-[10px] text-slate-400 block mt-0.5">Commercial Mixed-Use</span>
-                        </div>
-                        <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-                            <span class="text-xs text-slate-400 block">Max Height</span>
-                            <span id="max-height" class="text-base font-bold text-white font-mono">60 ft</span>
-                            <span class="text-[10px] text-amber-400 block mt-0.5">Compatibility Active</span>
-                        </div>
-                        <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-                            <span class="text-xs text-slate-400 block">Base FAR</span>
-                            <span id="max-far" class="text-base font-bold text-white font-mono">2.00 : 1</span>
-                            <span class="text-[10px] text-emerald-400 block mt-0.5">Bonus FAR: up to 5.0</span>
-                        </div>
-                        <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800">
-                            <span class="text-xs text-slate-400 block">Impervious Cover</span>
-                            <span id="max-impervious" class="text-base font-bold text-white font-mono">80% Max</span>
-                            <span class="text-[10px] text-slate-400 block mt-0.5">14,760 sq ft</span>
-                        </div>
-                    </div>
+                    <!-- Editorial Headline -->
+                    <h1 class="font-serif text-4xl sm:text-6xl lg:text-7xl font-normal leading-[1.06] tracking-tight text-ink">
+                        Turning 800-page municipal codes into a 5-page feasibility memo in 
+                        <span class="italic text-accent relative inline-block">
+                            60 seconds
+                            <svg class="absolute -bottom-1 left-0 w-full h-2 text-accent/40" viewBox="0 0 100 10" preserveAspectRatio="none">
+                                <path d="M0 5 Q 50 12, 100 4" stroke="currentColor" stroke-width="2.5" fill="transparent" />
+                            </svg>
+                        </span>.
+                    </h1>
 
-                    <!-- Setbacks Table -->
-                    <div class="bg-slate-900/60 rounded-xl border border-slate-800 overflow-hidden">
-                        <div class="px-4 py-2.5 bg-slate-900 border-b border-slate-800 flex justify-between items-center text-xs font-semibold">
-                            <span class="text-slate-300">Statutory Setback Dimensions</span>
-                            <span class="text-brand-400 font-mono">Title 25 § 25-2-492</span>
-                        </div>
-                        <div class="grid grid-cols-4 p-3 text-center text-xs divide-x divide-slate-800">
-                            <div>
-                                <span class="text-slate-400 block">Front</span>
-                                <span id="setback-front" class="font-bold text-white font-mono text-sm mt-0.5 block">10 ft</span>
-                            </div>
-                            <div>
-                                <span class="text-slate-400 block">Interior Side</span>
-                                <span id="setback-side" class="font-bold text-white font-mono text-sm mt-0.5 block">0 ft</span>
-                            </div>
-                            <div>
-                                <span class="text-slate-400 block">Street Side</span>
-                                <span id="setback-streetside" class="font-bold text-white font-mono text-sm mt-0.5 block">10 ft</span>
-                            </div>
-                            <div>
-                                <span class="text-slate-400 block">Rear</span>
-                                <span id="setback-rear" class="font-bold text-white font-mono text-sm mt-0.5 block">0 ft</span>
-                            </div>
-                        </div>
-                    </div>
+                    <!-- Editorial Subtitle -->
+                    <p class="mt-8 text-lg sm:text-xl font-normal text-ink-soft leading-relaxed max-w-2xl">
+                        Before spending <span class="font-mono text-ink font-semibold">$3,500</span> with land-use attorneys and waiting 14 business days, US real estate developers run instant parcel screening, compatibility step-downs, and stacked FAR calculations here.
+                    </p>
 
-                    <!-- Feasibility Capacity Calculations -->
-                    <div class="space-y-3">
-                        <div class="flex justify-between text-xs">
-                            <span class="text-slate-300 font-medium">Development Capacity Yield</span>
-                            <span class="text-slate-400">82% Efficiency Factor</span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3 text-xs">
-                            <div class="bg-slate-900/40 p-3 rounded-lg border border-slate-800/80">
-                                <span class="text-slate-400 block">Max Gross Floor Area (GFA)</span>
-                                <span id="max-gfa" class="text-lg font-bold text-white font-mono">36,900 sq ft</span>
-                                <span class="text-[11px] text-slate-400 mt-0.5 block">Base FAR 2.0 (Expandable to 92,250 sq ft via DB90)</span>
-                            </div>
-                            <div class="bg-slate-900/40 p-3 rounded-lg border border-slate-800/80">
-                                <span class="text-slate-400 block">Theoretical Multi-Family Units</span>
-                                <span id="max-units" class="text-lg font-bold text-brand-400 font-mono">35 Units</span>
-                                <span class="text-[11px] text-slate-400 mt-0.5 block">Avg 850 sq ft/unit (Up to 88 with Affordable Bonus)</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Permitted Uses Badges -->
-                    <div>
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs font-semibold text-slate-300">Permitted Use Entitlement Status</span>
-                            <span class="text-[11px] text-slate-400">Austin Table 25-2-491</span>
-                        </div>
-                        <div class="flex flex-wrap gap-2 text-xs">
-                            <span class="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 flex items-center">
-                                <i data-lucide="check" class="w-3 h-3 mr-1"></i> Multi-Family Residential (By-Right)
-                            </span>
-                            <span class="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 flex items-center">
-                                <i data-lucide="check" class="w-3 h-3 mr-1"></i> General Retail Sales (By-Right)
-                            </span>
-                            <span class="px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 flex items-center">
-                                <i data-lucide="check" class="w-3 h-3 mr-1"></i> Medical / Professional Office (By-Right)
-                            </span>
-                            <span class="px-2.5 py-1 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center">
-                                <i data-lucide="alert-circle" class="w-3 h-3 mr-1"></i> Cocktail Lounge / Bar (CUP Required)
-                            </span>
-                            <span class="px-2.5 py-1 rounded-md bg-rose-500/10 text-rose-300 border border-rose-500/30 flex items-center">
-                                <i data-lucide="x" class="w-3 h-3 mr-1"></i> Heavy Automotive Repair (Prohibited)
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Download Memo CTA -->
-                    <div class="pt-2">
-                        <button onclick="openMemoModal()" class="w-full py-3.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-navy-950 font-bold text-sm transition flex items-center justify-center space-x-2 shadow-lg shadow-brand-500/20">
-                            <i data-lucide="download" class="w-4 h-4"></i>
-                            <span>Generate Institutional 5-Page Feasibility Memo ($149)</span>
+                    <!-- CTAs & Trust Badges -->
+                    <div class="mt-10 flex flex-wrap items-center gap-4">
+                        <a href="#engine" class="inline-flex items-center gap-2.5 font-mono text-[13px] tracking-wide px-6 py-3.5 rounded bg-accent text-white hover:bg-accent-deep transition-all shadow-md">
+                            <span>Screen Austin, NYC, Miami, Dallas & LA</span>
+                            <span aria-hidden="true">→</span>
+                        </a>
+                        <button onclick="openMemoModal()" class="inline-flex items-center gap-2 font-mono text-[13px] tracking-wide px-5 py-3.5 rounded border border-paper-borderStrong bg-paper-panel hover:bg-paper-alt text-ink transition-all">
+                            <i data-lucide="download" class="w-4 h-4 text-accent"></i>
+                            <span>Download Sample Feasibility Memo (.PDF)</span>
                         </button>
                     </div>
 
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works Section -->
-    <section id="how-it-works" class="py-20 bg-navy-950 border-t border-slate-800">
-        <div class="max-w-6xl mx-auto px-4">
-            <div class="text-center mb-16">
-                <span class="text-xs font-semibold text-brand-400 uppercase tracking-wider block mb-2">Automated Due Diligence</span>
-                <h2 class="text-3xl font-extrabold text-white sm:text-4xl mb-4">How ZoneMemo AI Works</h2>
-                <p class="text-slate-400 max-w-xl mx-auto">Three deterministic steps from raw street address to institutional acquisition report.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-navy-900/60 p-6 rounded-2xl border border-slate-800 relative">
-                    <div class="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-400 flex items-center justify-center font-mono font-bold mb-4">01</div>
-                    <h3 class="text-lg font-bold text-white mb-2">GIS Cadastre Ingestion</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">
-                        Instantly pulls official parcel polygons, county assessor records, and acreage from county tax GIS servers.
-                    </p>
-                </div>
-                <div class="bg-navy-900/60 p-6 rounded-2xl border border-slate-800 relative">
-                    <div class="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-400 flex items-center justify-center font-mono font-bold mb-4">02</div>
-                    <h3 class="text-lg font-bold text-white mb-2">Deterministic Code Engine</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">
-                        Evaluates Table 25-2-492, compatibility step-downs, setbacks, and watershed impervious cover caps with 0% AI hallucination.
-                    </p>
-                </div>
-                <div class="bg-navy-900/60 p-6 rounded-2xl border border-slate-800 relative">
-                    <div class="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-400 flex items-center justify-center font-mono font-bold mb-4">03</div>
-                    <h3 class="text-lg font-bold text-white mb-2">Institutional Memo Export</h3>
-                    <p class="text-slate-400 text-sm leading-relaxed">
-                        Compiles an executive 5-page PDF with citations, massing math, and statutory disclaimers ready to share with capital partners.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Before vs. After Comparison -->
-    <section id="comparison" class="py-20 bg-navy-900 border-t border-slate-800">
-        <div class="max-w-5xl mx-auto px-4 text-center">
-            <h2 class="text-3xl font-extrabold text-white sm:text-4xl mb-4">Why Developers Are Switching to ZoneMemo</h2>
-            <p class="text-slate-400 max-w-2xl mx-auto mb-16">In US commercial real estate acquisitions, the fastest buyer with accurate numbers wins the deal.</p>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
-                <!-- Old Way -->
-                <div class="bg-navy-950 p-8 rounded-2xl border border-rose-900/30 relative">
-                    <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-xs font-semibold mb-6">
-                        <i data-lucide="x-circle" class="w-4 h-4"></i>
-                        <span>THE TRADITIONAL CONSULTANT SLOWDOWN</span>
+                    <!-- Market Coverage Ribbon -->
+                    <div class="mt-14 pt-6 border-t border-paper-border/80 flex flex-wrap items-center gap-y-3 gap-x-8 font-mono text-xs text-ink-muted">
+                        <span class="uppercase tracking-widest text-[10px] text-ink-faint">Live Cadastres Ingested:</span>
+                        <span class="inline-flex items-center gap-1.5"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> Austin TCAD (Title 25)</span>
+                        <span class="inline-flex items-center gap-1.5"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> NYC PLUTO (ZR 23-154)</span>
+                        <span class="inline-flex items-center gap-1.5"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> Miami 21 & SB 102 Live Local</span>
+                        <span class="inline-flex items-center gap-1.5"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> Dallas Chapter 51A</span>
+                        <span class="inline-flex items-center gap-1.5"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> Los Angeles ZIMAS & TOC</span>
                     </div>
-                    <ul class="space-y-4 text-slate-300 text-sm">
-                        <li class="flex items-start">
-                            <i data-lucide="clock" class="w-5 h-5 text-rose-400 mr-3 shrink-0 mt-0.5"></i>
-                            <span><strong>10 to 14 Business Days:</strong> Waiting for external land-use attorneys or civil engineers to return an initial screening memo.</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i data-lucide="dollar-sign" class="w-5 h-5 text-rose-400 mr-3 shrink-0 mt-0.5"></i>
-                            <span><strong>$3,500 – $5,000 per Memo:</strong> High hourly consulting retainers paid even on raw deals that get killed within a week.</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i data-lucide="alert-triangle" class="w-5 h-5 text-rose-400 mr-3 shrink-0 mt-0.5"></i>
-                            <span><strong>Lost Pipeline Deals:</strong> Competing acquisition teams submit institutional LOIs while you're still waiting for consultant notes.</span>
-                        </li>
-                    </ul>
                 </div>
+            </div>
+        </section>
 
-                <!-- ZoneMemo Way -->
-                <div class="bg-navy-950 p-8 rounded-2xl border border-brand-500/40 relative shadow-2xl shadow-brand-500/10">
-                    <div class="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-brand-500/10 text-brand-400 text-xs font-semibold mb-6">
-                        <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                        <span>THE ZONEMEMO AI ACCELERATION</span>
+        <!-- 01 The Gap (Shyft Studio Editorial Layout) -->
+        <section id="gap" class="py-20 border-b border-paper-border bg-paper-alt/40">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                    
+                    <!-- Section Index Number (Shyft Studio signature) -->
+                    <div class="lg:col-span-3 font-mono text-xs tracking-[0.14em] uppercase">
+                        <span class="text-accent font-semibold">01</span>
+                        <span class="text-ink-muted ml-2">// The Industry Gap</span>
                     </div>
-                    <ul class="space-y-4 text-slate-300 text-sm">
-                        <li class="flex items-start">
-                            <i data-lucide="zap" class="w-5 h-5 text-brand-400 mr-3 shrink-0 mt-0.5"></i>
-                            <span><strong>Under 60 Seconds:</strong> Instant spatial parcel boundary querying and municipal code cross-referencing.</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i data-lucide="shield-check" class="w-5 h-5 text-brand-400 mr-3 shrink-0 mt-0.5"></i>
-                            <span><strong>$149 per Report (or $399/mo):</strong> 95% cost reduction. Empower your junior acquisitions analysts to screen 30 deals a week.</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i data-lucide="file-check" class="w-5 h-5 text-brand-400 mr-3 shrink-0 mt-0.5"></i>
-                            <span><strong>Direct Statutory Citations:</strong> Every setback, height limit, and permitted use cites the exact enforceable municipal clause.</span>
-                        </li>
-                    </ul>
+
+                    <div class="lg:col-span-9 space-y-8">
+                        <h2 class="font-serif text-3xl sm:text-5xl font-normal text-ink leading-tight">
+                            Acquisition analysts spend two weeks waiting on legal memos, only to learn a parcel has a 60-foot compatibility buffer.
+                        </h2>
+                        
+                        <p class="text-ink-soft text-lg leading-relaxed max-w-3xl">
+                            In US commercial real estate development, deal velocity determines deal allocation. When an off-market 2.4-acre parcel hits your acquisition desk, you don’t have 14 days to request Title 25 legal opinions before putting down earnest money.
+                        </p>
+
+                        <!-- Contrast Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                            <!-- Legacy Process Card -->
+                            <div class="p-6 rounded-md border border-paper-border bg-paper-panel/70">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="font-mono text-xs uppercase tracking-wider text-accent-rust font-semibold">Traditional Due Diligence</span>
+                                    <span class="font-mono text-xs text-ink-muted">14 Days Required</span>
+                                </div>
+                                <ul class="space-y-3 font-sans text-sm text-ink-soft">
+                                    <li class="flex items-start gap-2.5">
+                                        <i data-lucide="x" class="w-4 h-4 text-accent-rust shrink-0 mt-0.5"></i>
+                                        <span><strong>$3,500+ retainer</strong> per parcel review to outside land-use counsel.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2.5">
+                                        <i data-lucide="x" class="w-4 h-4 text-accent-rust shrink-0 mt-0.5"></i>
+                                        <span>Manual PDF cross-referencing between Watershed, Zoning, and Overlay maps.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2.5">
+                                        <i data-lucide="x" class="w-4 h-4 text-accent-rust shrink-0 mt-0.5"></i>
+                                        <span>Missed off-market opportunities due to sluggish diligence turnaround.</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- ZoneMemo AI Card -->
+                            <div class="p-6 rounded-md border border-accent/30 bg-paper-panel shadow-sm">
+                                <div class="flex items-center justify-between mb-4">
+                                    <span class="font-mono text-xs uppercase tracking-wider text-accent font-semibold">ZoneMemo Feasibility Studio</span>
+                                    <span class="font-mono text-xs text-accent font-semibold">Under 60 Seconds</span>
+                                </div>
+                                <ul class="space-y-3 font-sans text-sm text-ink-soft">
+                                    <li class="flex items-start gap-2.5">
+                                        <i data-lucide="check" class="w-4 h-4 text-accent shrink-0 mt-0.5"></i>
+                                        <span><strong>Deterministic Zoning Math:</strong> Base FAR, Stacked Bonus FAR, and exact height envelopes.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2.5">
+                                        <i data-lucide="check" class="w-4 h-4 text-accent shrink-0 mt-0.5"></i>
+                                        <span><strong>Automated Step-Down Trigger:</strong> § 25-2-1063 triggers detected automatically via GIS buffer.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2.5">
+                                        <i data-lucide="check" class="w-4 h-4 text-accent shrink-0 mt-0.5"></i>
+                                        <span><strong>Institutional 5-Page Memo:</strong> 1-Click clean print export formatted for IC presentation.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- Pricing Section -->
-    <section id="pricing" class="py-20 bg-navy-950 border-t border-slate-800">
-        <div class="max-w-6xl mx-auto px-4">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl font-extrabold text-white sm:text-4xl mb-4">Simple, Transparent Pricing</h2>
-                <p class="text-slate-400 max-w-xl mx-auto">Pay per deal evaluation, or subscribe your acquisitions team for volume screening.</p>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+        <!-- 02 Interactive Feasibility Engine (TestFit + Zoneomics + Gridics Benchmarked) -->
+        <section id="engine" class="py-20 border-b border-paper-border bg-paper">
+            <div class="max-w-7xl mx-auto px-6">
                 
-                <!-- Tier 1: Pay Per Report -->
-                <div class="bg-navy-900/80 p-8 rounded-2xl border border-slate-800 flex flex-col justify-between">
+                <!-- Section Header -->
+                <div class="flex flex-col md:flex-row md:items-end justify-between mb-10 pb-6 border-b border-paper-border">
                     <div>
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pay-As-You-Go</span>
-                        <h3 class="text-xl font-bold text-white mt-1">Single Deal Triage</h3>
-                        <p class="text-slate-400 text-sm mt-2">Perfect for independent brokers and single parcel evaluations.</p>
-                        <div class="mt-6 mb-6">
-                            <span class="text-4xl font-extrabold text-white font-mono">$149</span>
-                            <span class="text-slate-400 text-sm">/ single report</span>
+                        <div class="font-mono text-xs tracking-[0.14em] uppercase text-accent mb-2">02 // Live Feasibility Engine</div>
+                        <h2 class="font-serif text-3xl sm:text-4xl font-normal text-ink">Interactive Parcel Envelope & Yield Simulator</h2>
+                    </div>
+                    
+                    <!-- City Selector Tabs -->
+                    <div class="mt-4 md:mt-0 flex flex-wrap gap-1.5 p-1 bg-paper-alt border border-paper-border rounded-md font-mono text-xs" id="city-selector">
+                        <button onclick="selectCity('austin')" id="tab-austin" class="px-3 py-1.5 rounded font-medium transition-all bg-accent text-white shadow-sm">Austin, TX</button>
+                        <button onclick="selectCity('nyc')" id="tab-nyc" class="px-3 py-1.5 rounded font-medium transition-all text-ink-muted hover:text-ink">New York, NY</button>
+                        <button onclick="selectCity('miami')" id="tab-miami" class="px-3 py-1.5 rounded font-medium transition-all text-ink-muted hover:text-ink">Miami, FL</button>
+                        <button onclick="selectCity('dallas')" id="tab-dallas" class="px-3 py-1.5 rounded font-medium transition-all text-ink-muted hover:text-ink">Dallas, TX</button>
+                        <button onclick="selectCity('la')" id="tab-la" class="px-3 py-1.5 rounded font-medium transition-all text-ink-muted hover:text-ink">Los Angeles, CA</button>
+                    </div>
+                </div>
+
+                <!-- Main Engine Workspace -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    
+                    <!-- Left: Interactive GIS Parcel Map & Preset Selector (7 cols) -->
+                    <div class="lg:col-span-7 space-y-6">
+                        
+                        <!-- Parcel Quick Selector -->
+                        <div class="p-4 rounded-md border border-paper-border bg-paper-panel flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
+                                <label class="font-mono text-[11px] uppercase tracking-wider text-ink-faint block">Select Pre-Audited Test Parcel</label>
+                                <select id="parcel-dropdown" onchange="handleParcelChange(this.value)" class="mt-1 font-mono text-sm bg-paper-top border border-paper-border rounded px-3 py-1.5 text-ink font-medium focus:outline-none focus:border-accent">
+                                    <!-- Options populated dynamically -->
+                                </select>
+                            </div>
+                            <div class="text-right font-mono text-xs text-ink-muted">
+                                <span>Status: </span>
+                                <span class="text-accent font-semibold bg-accent-light px-2 py-0.5 rounded">Deterministic Audit Verified</span>
+                            </div>
                         </div>
-                        <ul class="space-y-3 text-sm text-slate-300">
-                            <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-brand-400 mr-2 shrink-0"></i> Complete 5-Page Feasibility Memo</li>
-                            <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-brand-400 mr-2 shrink-0"></i> Base FAR, Height, Setbacks Matrix</li>
-                            <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-brand-400 mr-2 shrink-0"></i> Permitted vs. Conditional Use Table</li>
-                            <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-brand-400 mr-2 shrink-0"></i> Direct Municipal Code Citations</li>
-                        </ul>
-                    </div>
-                    <button onclick="openMemoModal()" class="mt-8 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm transition">Generate Single Memo</button>
-                </div>
 
-                <!-- Tier 2: Starter Subscription -->
-                <div class="bg-navy-900/80 p-8 rounded-2xl border-2 border-brand-500 relative flex flex-col justify-between shadow-2xl shadow-brand-500/10">
-                    <div class="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-brand-500 text-navy-950 font-bold text-xs uppercase tracking-wider">
-                        Most Popular for Analysts
-                    </div>
-                    <div>
-                        <span class="text-xs font-semibold text-brand-400 uppercase tracking-wider">Acquisitions Starter</span>
-                        <h3 class="text-xl font-bold text-white mt-1">Growth Pipeline</h3>
-                        <p class="text-slate-400 text-sm mt-2">For active development analysts screening deals every week.</p>
-                        <div class="mt-6 mb-6">
-                            <span class="text-4xl font-extrabold text-white font-mono">$399</span>
-                            <span class="text-slate-400 text-sm">/ month</span>
+                        <!-- Leaflet GIS Map Container -->
+                        <div class="relative rounded-md border border-paper-border overflow-hidden bg-paper-panel shadow-sm">
+                            <div id="parcel-map"></div>
+                            
+                            <!-- Map Overlay Badge -->
+                            <div class="absolute top-3 right-3 z-[1000] bg-paper-panel/95 backdrop-blur-md border border-paper-border px-3 py-1.5 rounded font-mono text-[11px] text-ink shadow-sm">
+                                <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>
+                                GIS Cadastre Layer Active
+                            </div>
                         </div>
-                        <ul class="space-y-3 text-sm text-slate-300">
-                            <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-brand-400 mr-2 shrink-0"></i> <strong>3 Full Feasibility Memos</strong> / month</li>
-                            <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-brand-400 mr-2 shrink-0"></i> Additional reports at discounted $129/ea</li>
-                            <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-brand-400 mr-2 shrink-0"></i> Live Setback & Envelope Visualizer</li>
-                            <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-brand-400 mr-2 shrink-0"></i> Secondary Overlay & Hazard Scrutiny</li>
-                        </ul>
-                    </div>
-                    <button onclick="openMemoModal()" class="mt-8 w-full py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-navy-950 font-bold text-sm transition shadow-md shadow-brand-500/20">Start 14-Day Free Trial</button>
-                </div>
 
-                <!-- Tier 3: Pro Team -->
-                <div class="bg-navy-900/80 p-8 rounded-2xl border border-slate-800 flex flex-col justify-between">
-                    <div>
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Brokerage & Enterprise</span>
-                        <h3 class="text-xl font-bold text-white mt-1">Pro Acquisitions Team</h3>
-                        <p class="text-slate-400 text-sm mt-2">For commercial brokerage teams & regional developers.</p>
-                        <div class="mt-6 mb-6">
-                            <span class="text-4xl font-extrabold text-white font-mono">$799</span>
-                            <span class="text-slate-400 text-sm">/ month</span>
+                        <!-- Massing & Yield Calculator (TestFit Benchmarked) -->
+                        <div class="p-6 rounded-md border border-paper-border bg-paper-panel space-y-5">
+                            <div class="flex items-center justify-between">
+                                <h3 class="font-serif text-xl font-normal text-ink">Building Massing & Yield Engine</h3>
+                                <span class="font-mono text-xs text-ink-muted">TestFit™ Feasibility Logic</span>
+                            </div>
+
+                            <!-- Interactive Sliders -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
+                                <div>
+                                    <div class="flex justify-between font-mono text-xs mb-1">
+                                        <span class="text-ink-muted">Target Building Height</span>
+                                        <span id="slider-height-val" class="font-semibold text-accent">60 ft</span>
+                                    </div>
+                                    <input type="range" id="slider-height" min="20" max="180" step="5" value="60" oninput="updateCalculations()" class="w-full accent-accent">
+                                    <div class="flex justify-between font-mono text-[10px] text-ink-faint mt-1">
+                                        <span>Min 20 ft</span>
+                                        <span id="slider-max-height-label">Max Code Allowed: 60 ft</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex justify-between font-mono text-xs mb-1">
+                                        <span class="text-ink-muted">Lot Coverage Utilization</span>
+                                        <span id="slider-coverage-val" class="font-semibold text-accent">70%</span>
+                                    </div>
+                                    <input type="range" id="slider-coverage" min="30" max="95" step="5" value="70" oninput="updateCalculations()" class="w-full accent-accent">
+                                    <div class="flex justify-between font-mono text-[10px] text-ink-faint mt-1">
+                                        <span>Conservation 30%</span>
+                                        <span>Max Footprint 95%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Stacked FAR Breakdown (Deepblocks Benchmarked) -->
+                            <div class="pt-3 border-t border-paper-border">
+                                <div class="flex justify-between font-mono text-xs mb-1.5">
+                                    <span class="text-ink font-medium">Stacked Floor Area Ratio (FAR) Allocation</span>
+                                    <span id="stacked-far-total" class="font-semibold text-accent">2.0:1 Total FAR</span>
+                                </div>
+                                <div class="h-3 w-full bg-paper-alt rounded-full overflow-hidden flex">
+                                    <div id="bar-base-far" class="bg-accent h-full transition-all" style="width: 60%;" title="Base FAR"></div>
+                                    <div id="bar-bonus-far" class="bg-accent-indigo h-full transition-all" style="width: 25%;" title="Inclusionary / Affordable Bonus FAR"></div>
+                                    <div id="bar-transit-far" class="bg-accent-bronze h-full transition-all" style="width: 15%;" title="Transit Oriented Bonus"></div>
+                                </div>
+                                <div class="flex gap-4 font-mono text-[11px] text-ink-muted mt-2">
+                                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-accent inline-block"></span> Base FAR (<span id="legend-base-far">1.2</span>)</span>
+                                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-accent-indigo inline-block"></span> Density Bonus (<span id="legend-bonus-far">0.5</span>)</span>
+                                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-accent-bronze inline-block"></span> Transit Incentive (<span id="legend-transit-far">0.3</span>)</span>
+                                </div>
+                            </div>
                         </div>
-                        <ul class="space-y-3 text-sm text-slate-300">
-                            <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-brand-400 mr-2 shrink-0"></i> <strong>8 Full Feasibility Memos</strong> / month</li>
-                            <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-brand-400 mr-2 shrink-0"></i> White-label branding for Offering Memos</li>
-                            <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-brand-400 mr-2 shrink-0"></i> Up to 3 Team User Seats</li>
-                            <li class="flex items-center"><i data-lucide="check" class="w-4 h-4 text-brand-400 mr-2 shrink-0"></i> Priority municipal code ingestion queue</li>
-                        </ul>
                     </div>
-                    <button onclick="openMemoModal()" class="mt-8 w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm transition">Contact Enterprise Sales</button>
-                </div>
 
-            </div>
-        </div>
-    </section>
+                    <!-- Right: Live Feasibility Intelligence Scorecard (5 cols) -->
+                    <div class="lg:col-span-5 space-y-6">
+                        
+                        <!-- Parcel Identity & Zoning Header -->
+                        <div class="p-6 rounded-md border border-paper-border bg-paper-panel space-y-4">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span id="card-city-name" class="font-mono text-xs uppercase tracking-widest text-ink-faint">Austin, TX (Travis County)</span>
+                                    <h3 id="card-parcel-address" class="font-serif text-2xl font-normal text-ink mt-0.5">2401 East 7th Street</h3>
+                                    <p id="card-parcel-id" class="font-mono text-xs text-ink-muted">Parcel ID: 02040508190000</p>
+                                </div>
+                                <div class="text-right">
+                                    <span id="card-zoning-code" class="font-mono text-sm font-bold text-accent bg-accent-light px-2.5 py-1 rounded border border-accent/20">CS-MU-V-NP</span>
+                                </div>
+                            </div>
 
-    <!-- Institutional Legal Disclaimer & Footer -->
-    <footer class="bg-navy-950 border-t border-slate-800 pt-12 pb-8 text-slate-400 text-xs">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div class="md:col-span-2 space-y-3">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-6 h-6 bg-brand-500 rounded flex items-center justify-center text-navy-950 font-bold text-xs">Z</div>
-                        <span class="text-base font-bold text-white tracking-tight">ZoneMemo AI</span>
+                            <!-- Key Metrics Grid -->
+                            <div class="grid grid-cols-2 gap-3 pt-3 border-t border-paper-border font-mono">
+                                <div class="p-3 bg-paper-top rounded border border-paper-border">
+                                    <span class="text-[11px] text-ink-faint uppercase block">Site Area</span>
+                                    <span id="card-site-area" class="text-base font-semibold text-ink">1.84 Acres</span>
+                                    <span id="card-site-sqft" class="text-[10px] text-ink-muted block">(80,150 SF)</span>
+                                </div>
+                                <div class="p-3 bg-paper-top rounded border border-paper-border">
+                                    <span class="text-[11px] text-ink-faint uppercase block">Max Gross SF</span>
+                                    <span id="card-max-gsf" class="text-base font-semibold text-accent">160,300 GSF</span>
+                                    <span class="text-[10px] text-ink-muted block">Buildable Volume</span>
+                                </div>
+                                <div class="p-3 bg-paper-top rounded border border-paper-border">
+                                    <span class="text-[11px] text-ink-faint uppercase block">Max Unit Yield</span>
+                                    <span id="card-unit-yield" class="text-base font-semibold text-ink">165 Units</span>
+                                    <span class="text-[10px] text-ink-muted block">@ 850 Avg SF/unit</span>
+                                </div>
+                                <div class="p-3 bg-paper-top rounded border border-paper-border">
+                                    <span class="text-[11px] text-ink-faint uppercase block">Parking Mandate</span>
+                                    <span id="card-parking-mandate" class="text-base font-semibold text-accent">0 Stalls</span>
+                                    <span id="card-parking-note" class="text-[10px] text-ink-muted block">Parking Reform Enacted</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Compatibility & Environmental Red-Flags (Gridics Benchmarked) -->
+                        <div class="p-6 rounded-md border border-paper-border bg-paper-panel space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-serif text-lg font-normal text-ink">Zoning Red-Flag Screener</h4>
+                                <span class="font-mono text-xs text-accent font-semibold">Gridics™ Audit Logic</span>
+                            </div>
+
+                            <div class="space-y-2.5 font-mono text-xs">
+                                <div id="flag-compatibility" class="p-3 rounded border flex items-start gap-3 bg-amber-50/60 border-amber-200/80 text-amber-900">
+                                    <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></i>
+                                    <div>
+                                        <span class="font-semibold block">Compatibility Step-Down Trigger</span>
+                                        <span id="flag-compatibility-text" class="text-[11px] text-amber-800">Single-family lot within 280 ft. § 25-2-1063 limits rear height to 40 ft.</span>
+                                    </div>
+                                </div>
+
+                                <div id="flag-watershed" class="p-3 rounded border flex items-start gap-3 bg-emerald-50/60 border-emerald-200/80 text-emerald-900">
+                                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+                                    <div>
+                                        <span class="font-semibold block">Watershed Impervious Cover Cap</span>
+                                        <span id="flag-watershed-text" class="text-[11px] text-emerald-800">Urban Watershed (Lady Bird Lake) — 80% Max Cover allowable.</span>
+                                    </div>
+                                </div>
+
+                                <div id="flag-historic" class="p-3 rounded border flex items-start gap-3 bg-paper-top border-paper-border text-ink-soft">
+                                    <i data-lucide="info" class="w-4 h-4 text-accent shrink-0 mt-0.5"></i>
+                                    <div>
+                                        <span class="font-semibold block">Affordable Housing Density Bonus</span>
+                                        <span id="flag-bonus-text" class="text-[11px] text-ink-muted">Eligible for Austin DB90 / HOME Phase 2 with 12% MFI units.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Permitted By-Right Uses Matrix (Zoneomics Benchmarked) -->
+                        <div class="p-6 rounded-md border border-paper-border bg-paper-panel space-y-4">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-serif text-lg font-normal text-ink">By-Right Permitted Uses</h4>
+                                <span class="font-mono text-xs text-ink-muted">Municipal Code Audit</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2 font-mono text-xs" id="permitted-uses-grid">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Action Bar -->
+                        <div class="pt-2">
+                            <button onclick="openMemoModal()" class="w-full py-3.5 px-4 rounded bg-ink hover:bg-ink-soft text-paper font-mono text-xs tracking-wider uppercase font-semibold flex items-center justify-center gap-2 shadow-md transition-all">
+                                <i data-lucide="file-text" class="w-4 h-4"></i>
+                                <span>Generate Institutional 5-Page Memo (.PDF)</span>
+                            </button>
+                        </div>
                     </div>
-                    <p class="max-w-md text-slate-400 leading-relaxed">
-                        Automated preliminary zoning due diligence and entitlement intelligence for US real estate developers, acquisitions analysts, and commercial land brokers.
-                    </p>
-                </div>
-                <div>
-                    <span class="text-slate-200 font-semibold uppercase tracking-wider block mb-3">Coverage</span>
-                    <ul class="space-y-1.5">
-                        <li>Austin, TX (Travis County)</li>
-                        <li>Dallas-Fort Worth, TX (Coming Soon)</li>
-                        <li>Miami-Dade, FL (Coming Soon)</li>
-                        <li>Phoenix, AZ (Coming Soon)</li>
-                    </ul>
-                </div>
-                <div>
-                    <span class="text-slate-200 font-semibold uppercase tracking-wider block mb-3">Compliance</span>
-                    <ul class="space-y-1.5">
-                        <li><a href="#" class="hover:text-white">Terms of Service</a></li>
-                        <li><a href="#" class="hover:text-white">Privacy Policy</a></li>
-                        <li><a href="#" class="hover:text-white">Limitation of Liability</a></li>
-                        <li><a href="#" class="hover:text-white">Data Integrity Standards</a></li>
-                    </ul>
                 </div>
             </div>
+        </section>
 
-            <!-- The 4-Tier Legal Disclaimer -->
-            <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800/80 leading-relaxed text-[11px] text-slate-400 space-y-2">
-                <p class="font-semibold text-slate-300">IMPORTANT NOTICE, DISCLAIMER, AND LIMITATION OF RELIANCE:</p>
-                <p>
-                    ZoneMemo AI is an automated preliminary screening and data aggregation tool utilizing public municipal records and geographic information system (GIS) datasets. 
-                    THIS REPORT DOES NOT CONSTITUTE A LEGAL OPINION, A ZONING OPINION LETTER (ZOL), AN ALTA SURVEY, AN ARCHITECTURAL SCHEMATIC, OR A FORMAL DETERMINATION BY ANY MUNICIPAL AUTHORITY. 
-                    Municipal bylaws are subject to frequent legislative amendments, administrative interpretations, uncodified overlay districts, and discretionary planning commission approvals.
-                </p>
-                <p>
-                    Users must independently verify all zoning classifications, dimensional standards, and permitted uses with licensed legal counsel, professional civil engineers, and the governing municipal planning department prior to closing purchase contracts or capital deployment. 
-                    Under no circumstances shall ZoneMemo AI or its parent entities be liable for any direct, indirect, or consequential damages resulting from the use of this report.
-                </p>
+        <!-- 03 Multi-City US Zoning Database -->
+        <section id="database" class="py-20 border-b border-paper-border bg-paper-alt/50">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                    
+                    <div class="lg:col-span-3 font-mono text-xs tracking-[0.14em] uppercase">
+                        <span class="text-accent font-semibold">03</span>
+                        <span class="text-ink-muted ml-2">// Municipal Database</span>
+                    </div>
+
+                    <div class="lg:col-span-9 space-y-8">
+                        <div>
+                            <h2 class="font-serif text-3xl sm:text-5xl font-normal text-ink leading-tight">
+                                Rigorous, deterministic zoning intelligence for the nation’s highest-velocity growth metros.
+                            </h2>
+                            <p class="mt-4 text-ink-soft text-base sm:text-lg max-w-2xl leading-relaxed">
+                                Most proptech portals scrape outdated PDF tables. ZoneMemo translates city municipal charters and recent state legislative overrides (like CA SB 423 and FL Live Local Act) into deterministic feasibility algorithms.
+                            </p>
+                        </div>
+
+                        <!-- Metro Law Cards Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                            
+                            <!-- Austin Card -->
+                            <div class="p-6 rounded-md border border-paper-border bg-paper-panel space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-mono text-xs uppercase font-semibold text-accent">Austin, Texas</span>
+                                    <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-paper-alt text-ink">Title 25 LDC</span>
+                                </div>
+                                <h3 class="font-serif text-xl font-normal text-ink">Compatibility § 25-2-1063 & HOME Phase 2</h3>
+                                <p class="text-xs text-ink-muted leading-relaxed font-sans">
+                                    Screens acute height step-downs triggered within 540 ft of single-family zones. Incorporates Austin's 2024 HOME Ordinance allowing up to 3 residential units by-right.
+                                </p>
+                                <div class="pt-2 border-t border-paper-border font-mono text-[11px] text-ink-faint">
+                                    Watershed Caps: Urban (80%) • Barton Springs (15%)
+                                </div>
+                            </div>
+
+                            <!-- NYC Card -->
+                            <div class="p-6 rounded-md border border-paper-border bg-paper-panel space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-mono text-xs uppercase font-semibold text-accent-indigo">New York City</span>
+                                    <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-paper-alt text-ink">Zoning Resolution</span>
+                                </div>
+                                <h3 class="font-serif text-xl font-normal text-ink">Quality Housing Program & MIH Bonus</h3>
+                                <p class="text-xs text-ink-muted leading-relaxed font-sans">
+                                    Calculates R6 to R10 contextual envelopes, Mandatory Inclusionary Housing (MIH Options 1 & 2) stacked FAR, and ground-floor commercial overlays (C1-5 / C2-4).
+                                </p>
+                                <div class="pt-2 border-t border-paper-border font-mono text-[11px] text-ink-faint">
+                                    Statutes: ZR § 23-154 • Sky Exposure Planes
+                                </div>
+                            </div>
+
+                            <!-- Miami Card -->
+                            <div class="p-6 rounded-md border border-paper-border bg-paper-panel space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-mono text-xs uppercase font-semibold text-accent-bronze">Miami, Florida</span>
+                                    <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-paper-alt text-ink">Miami 21 & SB 102</span>
+                                </div>
+                                <h3 class="font-serif text-xl font-normal text-ink">Live Local Act (SB 102) Preemption</h3>
+                                <p class="text-xs text-ink-muted leading-relaxed font-sans">
+                                    Applies Florida’s landmark SB 102 / SB 328 legislation, overriding municipal zoning to grant maximum commercial density and height for mixed-income developments.
+                                </p>
+                                <div class="pt-2 border-t border-paper-border font-mono text-[11px] text-ink-faint">
+                                    Transects: T6-8-O • T6-24-O • Waterfront Setbacks
+                                </div>
+                            </div>
+
+                            <!-- Dallas Card -->
+                            <div class="p-6 rounded-md border border-paper-border bg-paper-panel space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-mono text-xs uppercase font-semibold text-accent">Dallas, Texas</span>
+                                    <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-paper-alt text-ink">Chapter 51A</span>
+                                </div>
+                                <h3 class="font-serif text-xl font-normal text-ink">ForwardDallas 2.0 & Mixed Use MU-3</h3>
+                                <p class="text-xs text-ink-muted leading-relaxed font-sans">
+                                    Audits City of Dallas planned development districts (PDs), parking minimum reductions, and multifamily height transitions adjacent to single-family districts.
+                                </p>
+                                <div class="pt-2 border-t border-paper-border font-mono text-[11px] text-ink-faint">
+                                    Key Codes: MU-3 • CC • Residential Proximity Slope
+                                </div>
+                            </div>
+
+                            <!-- Los Angeles Card -->
+                            <div class="p-6 rounded-md border border-paper-border bg-paper-panel space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-mono text-xs uppercase font-semibold text-accent-indigo">Los Angeles, CA</span>
+                                    <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-paper-alt text-ink">LAMC & SB 423</span>
+                                </div>
+                                <h3 class="font-serif text-xl font-normal text-ink">TOC Guidelines & Ministerial SB 423</h3>
+                                <p class="text-xs text-ink-muted leading-relaxed font-sans">
+                                    Calculates Transit Oriented Communities (TOC Tiers 1–4) density bonuses up to 80%, parking reductions to 0.5/unit, and 60-day CEQA-exempt ministerial approvals.
+                                </p>
+                                <div class="pt-2 border-t border-paper-border font-mono text-[11px] text-ink-faint">
+                                    Frameworks: TOC Tiers 1-4 • CA Housing Crisis Act
+                                </div>
+                            </div>
+
+                            <!-- Enterprise Custom Municipal Ingestion -->
+                            <div class="p-6 rounded-md border border-dashed border-paper-borderStrong bg-paper-alt/40 space-y-3 flex flex-col justify-between">
+                                <div>
+                                    <span class="font-mono text-xs uppercase font-semibold text-ink-muted">Need Another City?</span>
+                                    <h3 class="font-serif text-xl font-normal text-ink mt-2">Custom Municipal Cadastre Ingestion</h3>
+                                    <p class="text-xs text-ink-muted leading-relaxed font-sans mt-2">
+                                        We ingest municipal codes, GIS layers, and overlay districts for institutional acquisition teams in 7 business days.
+                                    </p>
+                                </div>
+                                <a href="mailto:cadastre@zonememo.ai?subject=Request%20City%20Cadastre%20Ingestion" class="font-mono text-xs text-accent hover:underline font-semibold inline-flex items-center gap-1">
+                                    Request Municipal Onboarding →
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 04 Competitor Benchmark Matrix -->
+        <section id="matrix" class="py-20 border-b border-paper-border bg-paper">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                    
+                    <div class="lg:col-span-3 font-mono text-xs tracking-[0.14em] uppercase">
+                        <span class="text-accent font-semibold">04</span>
+                        <span class="text-ink-muted ml-2">// Due Diligence Matrix</span>
+                    </div>
+
+                    <div class="lg:col-span-9 space-y-8">
+                        <div>
+                            <h2 class="font-serif text-3xl sm:text-5xl font-normal text-ink leading-tight">
+                                Built specifically for acquisition triage, not just drafting.
+                            </h2>
+                            <p class="mt-4 text-ink-soft text-base sm:text-lg max-w-2xl leading-relaxed">
+                                See how ZoneMemo AI delivers the exact analytical layer that land-use attorneys, architectural massing tools, and generic data scrapers miss.
+                            </p>
+                        </div>
+
+                        <!-- Comparison Table -->
+                        <div class="overflow-x-auto rounded-md border border-paper-border bg-paper-panel shadow-sm">
+                            <table class="w-full text-left border-collapse font-mono text-xs">
+                                <thead>
+                                    <tr class="border-b border-paper-border bg-paper-alt/80 text-ink">
+                                        <th class="p-4 font-semibold uppercase tracking-wider">Feasibility Metric</th>
+                                        <th class="p-4 font-semibold text-accent bg-accent-light/50">ZoneMemo AI</th>
+                                        <th class="p-4 font-medium text-ink-muted">Land-Use Attorney</th>
+                                        <th class="p-4 font-medium text-ink-muted">Architectural 3D (TestFit)</th>
+                                        <th class="p-4 font-medium text-ink-muted">Raw Data APIs (Zoneomics)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-paper-border text-ink-soft">
+                                    <tr>
+                                        <td class="p-4 font-sans font-medium text-ink">Turnaround Time</td>
+                                        <td class="p-4 font-semibold text-accent bg-accent-light/20">Under 60 Seconds</td>
+                                        <td class="p-4">10 to 14 Days</td>
+                                        <td class="p-4">2 to 4 Hours</td>
+                                        <td class="p-4">Instant (Raw JSON)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 font-sans font-medium text-ink">Cost Per Parcel Triage</td>
+                                        <td class="p-4 font-semibold text-accent bg-accent-light/20">$149 / deal</td>
+                                        <td class="p-4">$3,500 – $5,000</td>
+                                        <td class="p-4">$10,000+ Annual Seat</td>
+                                        <td class="p-4">$250+ per data pull</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 font-sans font-medium text-ink">Compatibility Step-Down Trigger</td>
+                                        <td class="p-4 font-semibold text-accent bg-accent-light/20">Automated GIS Buffer</td>
+                                        <td class="p-4">Manual measurement</td>
+                                        <td class="p-4">User must draw manually</td>
+                                        <td class="p-4">Not calculated</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 font-sans font-medium text-ink">State Preemption Laws (SB 423 / SB 102)</td>
+                                        <td class="p-4 font-semibold text-accent bg-accent-light/20">Built into Algorithm</td>
+                                        <td class="p-4">Requires partner billing</td>
+                                        <td class="p-4">Not modeled</td>
+                                        <td class="p-4">City text only</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-4 font-sans font-medium text-ink">Institutional 5-Page Memo Export</td>
+                                        <td class="p-4 font-semibold text-accent bg-accent-light/20">1-Click Investment Ready</td>
+                                        <td class="p-4">30-page legal narrative</td>
+                                        <td class="p-4">CAD / Revit export</td>
+                                        <td class="p-4">Unformatted raw PDF</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 05 Pricing & Access -->
+        <section id="pricing" class="py-20 border-b border-paper-border bg-paper-alt/40">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                    
+                    <div class="lg:col-span-3 font-mono text-xs tracking-[0.14em] uppercase">
+                        <span class="text-accent font-semibold">05</span>
+                        <span class="text-ink-muted ml-2">// Pricing & Access</span>
+                    </div>
+
+                    <div class="lg:col-span-9 space-y-8">
+                        <div>
+                            <h2 class="font-serif text-3xl sm:text-5xl font-normal text-ink leading-tight">
+                                Transparent feasibility pricing designed for high-volume deal triage.
+                            </h2>
+                            <p class="mt-4 text-ink-soft text-base sm:text-lg max-w-2xl leading-relaxed">
+                                Never pay a $3,500 legal retainer on an unviable parcel again. Start with pay-per-report or equip your entire acquisitions team.
+                            </p>
+                        </div>
+
+                        <!-- Pricing Cards -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+                            
+                            <!-- Deal Triage (Single Memo) -->
+                            <div class="p-6 rounded-md border border-paper-border bg-paper-panel space-y-6 flex flex-col justify-between">
+                                <div class="space-y-4">
+                                    <span class="font-mono text-xs uppercase tracking-wider text-ink-faint font-semibold">Single Deal Triage</span>
+                                    <div class="font-mono">
+                                        <span class="text-4xl font-bold text-ink">$149</span>
+                                        <span class="text-xs text-ink-muted">/ single memo</span>
+                                    </div>
+                                    <p class="text-xs text-ink-soft leading-relaxed font-sans">
+                                        For independent investors and brokers evaluating an off-market deal under tight LOI deadlines.
+                                    </p>
+                                    <ul class="space-y-2.5 font-mono text-xs text-ink-muted pt-4 border-t border-paper-border">
+                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> 1 Full 5-Page Feasibility Memo</li>
+                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> Instant PDF Export</li>
+                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> Compatibility & Step-Down Audit</li>
+                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> 30-Day Memo Re-run Guarantee</li>
+                                    </ul>
+                                </div>
+                                <button onclick="openMemoModal()" class="w-full py-2.5 rounded border border-paper-borderStrong bg-transparent hover:bg-paper-alt font-mono text-xs font-semibold text-ink transition-all">
+                                    Run Single Deal ($149)
+                                </button>
+                            </div>
+
+                            <!-- Growth Pipeline (Highlighted) -->
+                            <div class="p-6 rounded-md border-2 border-accent bg-paper-panel space-y-6 flex flex-col justify-between shadow-md relative">
+                                <div class="absolute -top-3 right-4 bg-accent text-white font-mono text-[10px] uppercase tracking-wider px-2.5 py-0.5 rounded">
+                                    Most Popular for Acquisitions
+                                </div>
+                                <div class="space-y-4">
+                                    <span class="font-mono text-xs uppercase tracking-wider text-accent font-semibold">Acquisitions Pipeline</span>
+                                    <div class="font-mono">
+                                        <span class="text-4xl font-bold text-ink">$399</span>
+                                        <span class="text-xs text-ink-muted">/ month</span>
+                                    </div>
+                                    <p class="text-xs text-ink-soft leading-relaxed font-sans">
+                                        For land acquisition analysts and developers screening 5–10 prospective development sites every month.
+                                    </p>
+                                    <ul class="space-y-2.5 font-mono text-xs text-ink-soft pt-4 border-t border-paper-border">
+                                        <li class="flex items-center gap-2 font-medium"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> <strong>10 Full Memos / month</strong></li>
+                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> Multi-City Cadastre Access</li>
+                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> Interactive Massing Simulator</li>
+                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> White-Label PDF Branding</li>
+                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> Priority Municipal Code Updates</li>
+                                    </ul>
+                                </div>
+                                <button onclick="openMemoModal()" class="w-full py-2.5 rounded bg-accent hover:bg-accent-deep font-mono text-xs font-semibold text-white transition-all shadow-sm">
+                                    Start Acquisitions Plan
+                                </button>
+                            </div>
+
+                            <!-- Enterprise Studio -->
+                            <div class="p-6 rounded-md border border-paper-border bg-paper-panel space-y-6 flex flex-col justify-between">
+                                <div class="space-y-4">
+                                    <span class="font-mono text-xs uppercase tracking-wider text-ink-faint font-semibold">Institutional Studio</span>
+                                    <div class="font-mono">
+                                        <span class="text-4xl font-bold text-ink">$899</span>
+                                        <span class="text-xs text-ink-muted">/ month</span>
+                                    </div>
+                                    <p class="text-xs text-ink-soft leading-relaxed font-sans">
+                                        For merchant developers, private equity real estate funds, and national brokerage teams.
+                                    </p>
+                                    <ul class="space-y-2.5 font-mono text-xs text-ink-muted pt-4 border-t border-paper-border">
+                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> Unlimited Feasibility Runs</li>
+                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> 5 Analyst Seats Included</li>
+                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> Custom Municipal Layer Ingestion</li>
+                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> Dedicated Land-Use Paralegal QA</li>
+                                        <li class="flex items-center gap-2"><i data-lucide="check" class="w-3.5 h-3.5 text-accent"></i> Direct GIS / GIS REST API Sync</li>
+                                    </ul>
+                                </div>
+                                <a href="mailto:enterprise@zonememo.ai?subject=Enterprise%20Studio%20Inquiry" class="w-full py-2.5 rounded border border-paper-borderStrong bg-transparent hover:bg-paper-alt font-mono text-xs font-semibold text-ink text-center transition-all">
+                                    Contact Institutional Sales
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Editorial Footer (Shyft Studio Inspired) -->
+    <footer class="border-t border-paper-border py-12 bg-paper-top no-print">
+        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-6 font-mono text-xs text-ink-muted">
+            <div class="flex items-center gap-3">
+                <span class="inline-flex h-6 w-6 items-center justify-center rounded border border-ink/20 text-accent">
+                    <i data-lucide="building-2" class="w-3.5 h-3.5"></i>
+                </span>
+                <span class="text-ink font-semibold">ZoneMemo AI Feasibility Studio</span>
+                <span class="text-ink-faint">© 2026</span>
             </div>
 
-            <div class="flex flex-col sm:flex-row justify-between items-center text-slate-400 pt-4 border-t border-slate-900">
-                <p>&copy; 2026 ZoneMemo AI. All rights reserved. Governed under the Laws of the State of Delaware.</p>
-                <p class="mt-2 sm:mt-0 font-mono text-[10px]">Austin Enterprise Engine v2.4.1</p>
+            <div class="flex flex-wrap gap-6 text-[12px]">
+                <a href="#gap" class="hover:text-ink transition-colors">The Gap</a>
+                <a href="#engine" class="hover:text-ink transition-colors">Feasibility Engine</a>
+                <a href="#database" class="hover:text-ink transition-colors">US Cadastre</a>
+                <a href="#pricing" class="hover:text-ink transition-colors">Pricing</a>
+                <a href="https://github.com/hardikag104/zonememo-ai" target="_blank" class="text-accent hover:underline flex items-center gap-1">
+                    GitHub <i data-lucide="external-link" class="w-3 h-3"></i>
+                </a>
             </div>
         </div>
     </footer>
 
-    <!-- Interactive 5-Page Feasibility Memo Modal -->
-    <div id="memo-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-navy-950 border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden my-8">
+    <!-- Interactive Institutional 5-Page Memo Modal / Print Ready Container -->
+    <div id="memo-modal" class="fixed inset-0 z-50 bg-ink/70 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto no-print">
+        <div class="bg-paper-panel border border-paper-borderStrong rounded-md max-w-4xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
             
             <!-- Modal Header -->
-            <div class="px-6 py-4 bg-navy-900 border-b border-slate-800 flex justify-between items-center no-print">
-                <div class="flex items-center space-x-3">
-                    <i data-lucide="file-check" class="w-5 h-5 text-brand-400"></i>
-                    <h3 class="font-bold text-white text-base">Zoning Feasibility Memorandum — Austin, TX</h3>
+            <div class="p-4 border-b border-paper-border bg-paper-top flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-accent text-white">CONFIDENTIAL</span>
+                    <span class="font-mono text-xs text-ink font-semibold">ZoneMemo Institutional Feasibility Memo</span>
                 </div>
-                <div class="flex items-center space-x-2">
-                    <button onclick="window.print()" class="px-3.5 py-1.5 rounded-lg bg-brand-500 hover:bg-brand-600 text-navy-950 font-bold text-xs transition flex items-center space-x-1.5">
+                <div class="flex items-center gap-3">
+                    <button onclick="window.print()" class="inline-flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 rounded bg-accent hover:bg-accent-deep text-white font-medium shadow-sm transition-all">
                         <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                        <span>Print / Save as PDF</span>
+                        <span>Print / Save PDF</span>
                     </button>
-                    <button onclick="closeMemoModal()" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
-                        <i data-lucide="x" class="w-4 h-4"></i>
+                    <button onclick="closeMemoModal()" class="text-ink-muted hover:text-ink p-1">
+                        <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- Modal Body (The 5-Page Memo Layout) -->
-            <div id="print-memo" class="p-8 overflow-y-auto bg-slate-950 text-slate-100 font-sans space-y-12">
+            <!-- Modal Body (Printable 5-Page Feasibility Memo Preview) -->
+            <div class="p-8 overflow-y-auto font-sans space-y-8 text-ink text-sm bg-paper-panel" id="modal-memo-content">
                 
-                <!-- MEMO PAGE 1: EXECUTIVE SUMMARY -->
-                <div class="border-b border-slate-800 pb-10 space-y-6">
-                    <div class="flex justify-between items-start border-b border-slate-800 pb-4">
-                        <div>
-                            <span class="text-xs font-mono uppercase tracking-wider text-brand-400 font-bold">ZoneMemo AI Enterprise Dossier</span>
-                            <h1 class="text-2xl font-black text-white mt-1">Zoning & Development Feasibility Memo</h1>
-                            <p class="text-xs text-slate-400 mt-0.5">Jurisdiction: City of Austin | Travis County | State of Texas</p>
-                        </div>
-                        <div class="text-right text-xs font-mono text-slate-400">
-                            <div>Date: September 5, 2026</div>
-                            <div>Audit Ref: ZM-ATX-2026-0984</div>
-                            <div class="text-emerald-400 font-bold">Status: Complete / Verified</div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4 text-xs bg-slate-900 p-4 rounded-xl border border-slate-800">
-                        <div>
-                            <span class="text-slate-400 block">Subject Property Address:</span>
-                            <span id="memo-address" class="text-sm font-bold text-white block mt-0.5">1201 E 6th St, Austin, TX 78702</span>
-                            <span class="text-slate-400 block mt-2">Legal Description:</span>
-                            <span class="text-slate-300">LOT 1-3 BLK 15 OUTLOT 44 DIVISION O</span>
-                        </div>
-                        <div>
-                            <span class="text-slate-400 block">Assessor Parcel Number (APN):</span>
-                            <span id="memo-apn" class="font-mono text-sm font-bold text-brand-400 block mt-0.5">0204050801</span>
-                            <span class="text-slate-400 block mt-2">Land Area:</span>
-                            <span id="memo-land-area" class="text-slate-300 font-mono">18,450 sq ft (0.423 Acres)</span>
-                        </div>
-                    </div>
-
+                <!-- Memo Header -->
+                <div class="border-b-2 border-ink pb-6 flex justify-between items-start">
                     <div>
-                        <h4 class="text-sm font-bold text-white uppercase tracking-wider mb-2">1. Executive Feasibility Verdict</h4>
-                        <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-slate-200 leading-relaxed space-y-2">
-                            <p>
-                                <strong>HIGH-YIELD DEVELOPMENT SITE:</strong> The subject parcel is located in the <strong>CS-MU-CO-NP</strong> district (General Commercial Services with Mixed Use Combining District). By-right multi-family residential, general retail, and commercial mixed-use developments are permitted.
+                        <div class="font-mono text-xs text-accent font-semibold tracking-widest uppercase">ZONING & ENTITLEMENT FEASIBILITY MEMO</div>
+                        <h1 id="memo-site-title" class="font-serif text-3xl font-bold mt-1 text-ink">2401 East 7th Street, Austin, TX</h1>
+                        <p class="font-mono text-xs text-ink-muted mt-1">Prepared for: Investment Committee & Capital Partners</p>
+                    </div>
+                    <div class="text-right font-mono text-xs">
+                        <div class="text-ink-faint">DATE OF AUDIT</div>
+                        <div class="font-semibold text-ink">SEPTEMBER 5, 2026</div>
+                        <div class="text-[11px] text-accent mt-1">STATUS: BY-RIGHT VIABLE</div>
+                    </div>
+                </div>
+
+                <!-- 1. Executive Summary & Yield Analysis -->
+                <div>
+                    <h3 class="font-mono text-xs uppercase tracking-widest text-ink font-semibold mb-3 border-b border-paper-border pb-1">1.0 Executive Deal Yield Matrix</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 font-mono text-xs">
+                        <div class="p-3 bg-paper-top border border-paper-border rounded">
+                            <span class="text-ink-faint text-[10px] uppercase block">Gross Lot Area</span>
+                            <span id="memo-lot-size" class="text-sm font-bold text-ink">1.84 AC (80,150 SF)</span>
+                        </div>
+                        <div class="p-3 bg-paper-top border border-paper-border rounded">
+                            <span class="text-ink-faint text-[10px] uppercase block">Base / Stacked FAR</span>
+                            <span id="memo-far" class="text-sm font-bold text-accent">1.2 / 2.0 FAR</span>
+                        </div>
+                        <div class="p-3 bg-paper-top border border-paper-border rounded">
+                            <span class="text-ink-faint text-[10px] uppercase block">Max Gross Buildable</span>
+                            <span id="memo-gsf" class="text-sm font-bold text-ink">160,300 GSF</span>
+                        </div>
+                        <div class="p-3 bg-paper-top border border-paper-border rounded">
+                            <span class="text-ink-faint text-[10px] uppercase block">Unit Capacity</span>
+                            <span id="memo-units" class="text-sm font-bold text-accent">165 Units</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Deterministic Zoning & Code Standards -->
+                <div>
+                    <h3 class="font-mono text-xs uppercase tracking-widest text-ink font-semibold mb-3 border-b border-paper-border pb-1">2.0 Base Zoning District Standards</h3>
+                    <table class="w-full text-left font-mono text-xs border border-paper-border">
+                        <tbody class="divide-y divide-paper-border">
+                            <tr class="bg-paper-top"><td class="p-2.5 font-semibold text-ink w-1/3">Governing Jurisdiction</td><td id="memo-jurisdiction" class="p-2.5 text-ink-soft">City of Austin, Land Development Code (Title 25)</td></tr>
+                            <tr><td class="p-2.5 font-semibold text-ink">Zoning District & Overlays</td><td id="memo-zoning" class="p-2.5 text-ink-soft">CS-MU-V-NP (Commercial Services, Mixed Use, Vertical Mixed Use)</td></tr>
+                            <tr class="bg-paper-top"><td class="p-2.5 font-semibold text-ink">Maximum Allowable Height</td><td id="memo-height" class="p-2.5 text-ink-soft">60 ft (Up to 90 ft with Austin DB90 Affordability Bonus)</td></tr>
+                            <tr><td class="p-2.5 font-semibold text-ink">Minimum Yard Setbacks</td><td id="memo-setbacks" class="p-2.5 text-ink-soft">Front: 10 ft | Side: 0 ft (Interior), 15 ft (Adjacent to Residential) | Rear: 20 ft</td></tr>
+                            <tr class="bg-paper-top"><td class="p-2.5 font-semibold text-ink">Impervious Cover Cap</td><td id="memo-cover" class="p-2.5 text-ink-soft">80% Maximum (Urban Watershed Classification)</td></tr>
+                            <tr><td class="p-2.5 font-semibold text-ink">Parking Minimums</td><td id="memo-parking" class="p-2.5 text-ink-soft">0 Off-Street Stalls Required (Citywide Parking Mandates Eliminated)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 3. Compatibility & Environmental Red-Flags -->
+                <div>
+                    <h3 class="font-mono text-xs uppercase tracking-widest text-ink font-semibold mb-3 border-b border-paper-border pb-1">3.0 Red-Flag Screening & Buffer Audit</h3>
+                    <div class="space-y-3 font-mono text-xs">
+                        <div class="p-3 bg-amber-50 border border-amber-200 rounded text-amber-900">
+                            <strong>⚠️ Compatibility Height Step-Down Triggered (§ 25-2-1063):</strong>
+                            <p class="font-sans text-[12px] mt-1 text-amber-800">
+                                Single-family zoning (SF-3) is situated within 280 feet of the northwest parcel property boundary. Building massing within 300 feet of this lot must taper down to 40 feet. Architect must step massing toward East 7th Street.
                             </p>
-                            <p>
-                                The parcel benefits from Austin's 2023 citywide elimination of parking minimums and is qualified for Austin's <strong>Density Bonus 90 (DB90)</strong> program, which unlocks an effective FAR of up to 5.0 and up to 90 feet of building height in exchange for on-site income-restricted units.
+                        </div>
+                        <div class="p-3 bg-emerald-50 border border-emerald-200 rounded text-emerald-900">
+                            <strong>✅ Environmental & Watershed Clearance:</strong>
+                            <p class="font-sans text-[12px] mt-1 text-emerald-800">
+                                Parcel is outside FEMA 100-Year & 500-Year Floodplains. No Critical Water Quality Zone (CWQZ) buffers or karst aquifer recharge restrictions detected.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <!-- MEMO PAGE 2: DIMENSIONAL & BULK STANDARDS TABLE -->
-                <div class="border-b border-slate-800 pb-10 space-y-6">
-                    <h4 class="text-sm font-bold text-white uppercase tracking-wider">2. Dimensional & Bulk Standards Matrix (LDC Table 25-2-492)</h4>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-xs text-left border-collapse">
-                            <thead>
-                                <tr class="bg-slate-900 border-b border-slate-700 text-slate-300 font-semibold">
-                                    <th class="py-2.5 px-3">Regulatory Parameter</th>
-                                    <th class="py-2.5 px-3">Base Standard</th>
-                                    <th class="py-2.5 px-3">Incentive / Bonus</th>
-                                    <th class="py-2.5 px-3">Statutory Citation</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-800 text-slate-300">
-                                <tr>
-                                    <td class="py-2 px-3 font-medium text-white">Floor Area Ratio (FAR)</td>
-                                    <td class="py-2 px-3 font-mono font-bold text-brand-400">2.00 : 1</td>
-                                    <td class="py-2 px-3 font-mono text-emerald-400">Up to 5.00 : 1 (DB90)</td>
-                                    <td class="py-2 px-3 text-slate-400">LDC § 25-2-492</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-2 px-3 font-medium text-white">Maximum Building Height</td>
-                                    <td class="py-2 px-3 font-mono font-bold text-white">60 ft</td>
-                                    <td class="py-2 px-3 font-mono text-emerald-400">Up to 90 ft (Bonus)</td>
-                                    <td class="py-2 px-3 text-slate-400">LDC § 25-2-492</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-2 px-3 font-medium text-white">Maximum Building Coverage</td>
-                                    <td class="py-2 px-3 font-mono">75.0% (13,837 sq ft)</td>
-                                    <td class="py-2 px-3 text-slate-400">Standard</td>
-                                    <td class="py-2 px-3 text-slate-400">LDC § 25-2-492</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-2 px-3 font-medium text-white">Maximum Impervious Cover</td>
-                                    <td class="py-2 px-3 font-mono text-amber-400">80.0% (14,760 sq ft)</td>
-                                    <td class="py-2 px-3 text-slate-400">Urban Watershed Cap</td>
-                                    <td class="py-2 px-3 text-slate-400">LDC § 25-8-392</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-2 px-3 font-medium text-white">Front Yard Setback</td>
-                                    <td class="py-2 px-3 font-mono">10.0 ft</td>
-                                    <td class="py-2 px-3 text-slate-400">Standard</td>
-                                    <td class="py-2 px-3 text-slate-400">LDC § 25-2-492</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-2 px-3 font-medium text-white">Interior Side Setback</td>
-                                    <td class="py-2 px-3 font-mono">0.0 ft</td>
-                                    <td class="py-2 px-3 text-slate-400">0 ft (unless abutting SF)</td>
-                                    <td class="py-2 px-3 text-slate-400">LDC § 25-2-492</td>
-                                </tr>
-                                <tr>
-                                    <td class="py-2 px-3 font-medium text-white">Rear Yard Setback</td>
-                                    <td class="py-2 px-3 font-mono">0.0 ft</td>
-                                    <td class="py-2 px-3 text-slate-400">0 ft (unless abutting SF)</td>
-                                    <td class="py-2 px-3 text-slate-400">LDC § 25-2-492</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                <!-- 4. Permitted Uses & Recommendation -->
+                <div>
+                    <h3 class="font-mono text-xs uppercase tracking-widest text-ink font-semibold mb-3 border-b border-paper-border pb-1">4.0 Highest & Best Use Recommendation</h3>
+                    <p class="font-sans text-xs text-ink-soft leading-relaxed">
+                        The parcel supports a 5-story Type III-A wood-frame over concrete podium multifamily mixed-use project. By leveraging the Vertical Mixed-Use (VMU2) or DB90 affordability bonus with 12% MFI units, the site unlocks a 2.0 FAR and up to 165 residential units with zero required parking, substantially lowering total development cost (TDC) per unit.
+                    </p>
                 </div>
 
-                <!-- MEMO PAGE 3: PERMITTED USES & ENTITLEMENTS -->
-                <div class="border-b border-slate-800 pb-10 space-y-6">
-                    <h4 class="text-sm font-bold text-white uppercase tracking-wider">3. Land Use Entitlement Assessment</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
-                            <span class="font-bold text-emerald-400 flex items-center">
-                                <i data-lucide="check" class="w-4 h-4 mr-1"></i> Permitted By-Right (No Public Hearings)
-                            </span>
-                            <ul class="list-disc list-inside text-slate-300 space-y-1">
-                                <li>Multi-Family Residential (Stacked Flats)</li>
-                                <li>General Retail Sales & Services</li>
-                                <li>Administrative & Professional Offices</li>
-                                <li>Medical Clinics / Urgent Care</li>
-                                <li>Food Sales / Grocery Market</li>
-                            </ul>
-                        </div>
-                        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
-                            <span class="font-bold text-amber-400 flex items-center">
-                                <i data-lucide="alert-circle" class="w-4 h-4 mr-1"></i> Conditional Use (Planning Commission Approval)
-                            </span>
-                            <ul class="list-disc list-inside text-slate-300 space-y-1">
-                                <li>Cocktail Lounge / Tavern (§ 25-2-801)</li>
-                                <li>Hotel / Motel (> 100 rooms)</li>
-                                <li>Drive-Through Facilities</li>
-                                <li>Outdoor Entertainment</li>
-                            </ul>
-                        </div>
-                    </div>
+                <!-- Signoff & Disclaimer -->
+                <div class="pt-4 border-t border-paper-border font-mono text-[10px] text-ink-faint flex justify-between">
+                    <span>Generated by ZoneMemo AI Intelligence Engine</span>
+                    <span>Austin Municipal Code Verification Hash: #ATX-2026-LDC-492</span>
                 </div>
-
-                <!-- MEMO PAGE 4: DEVELOPMENT CAPACITY MATH -->
-                <div class="border-b border-slate-800 pb-10 space-y-6">
-                    <h4 class="text-sm font-bold text-white uppercase tracking-wider">4. Theoretical Building Envelope & Unit Yield</h4>
-                    <div class="grid grid-cols-3 gap-3 text-center text-xs">
-                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
-                            <span class="text-slate-400 block">Base Maximum GFA</span>
-                            <span class="text-base font-bold text-white font-mono mt-1 block">36,900 sq ft</span>
-                            <span class="text-[10px] text-slate-400">FAR 2.00 × 18,450 sq ft</span>
-                        </div>
-                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
-                            <span class="text-slate-400 block">Max Buildable Footprint</span>
-                            <span class="text-base font-bold text-white font-mono mt-1 block">13,837 sq ft</span>
-                            <span class="text-[10px] text-slate-400">75% Max Building Coverage</span>
-                        </div>
-                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800">
-                            <span class="text-slate-400 block">Estimated Residential Capacity</span>
-                            <span class="text-base font-bold text-brand-400 font-mono mt-1 block">35 – 88 Units</span>
-                            <span class="text-[10px] text-slate-400">Base vs. DB90 Density Bonus</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- MEMO PAGE 5: STATUTORY CITATIONS & LEGAL DISCLAIMER -->
-                <div class="space-y-4">
-                    <h4 class="text-sm font-bold text-white uppercase tracking-wider">5. Legal Notice & Reliance Disclaimers</h4>
-                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-400 leading-relaxed space-y-2">
-                        <p class="font-bold text-slate-300">PRELIMINARY FEASIBILITY SCREENING ONLY:</p>
-                        <p>
-                            This feasibility memorandum is compiled via automated legal data parsing by ZoneMemo AI. THIS REPORT DOES NOT CONSTITUTE A FORMAL ZONING OPINION LETTER (ZOL) OR LEGAL COUNSEL.
-                            All calculations must be verified by licensed structural/civil engineers and municipal planning staff prior to executing binding land purchase agreements.
-                        </p>
-                        <p class="font-mono text-[10px] text-slate-500 pt-2 border-t border-slate-800">
-                            Verification Hash: 8f4a29c1d09e4a3b772e519283fa6102 | Codification Source: Austin Title 25 Land Development Code (Municode)
-                        </p>
-                    </div>
-                </div>
-
             </div>
-
         </div>
     </div>
 
-    <!-- Application Script -->
-    <script>
-        // Lucide Icons Render
-        lucide.createIcons();
+    <!-- Hidden Dedicated Printable DOM Node for window.print() -->
+    <div id="print-institutional-memo" class="hidden font-sans p-8 text-black bg-white max-w-4xl mx-auto">
+        <!-- Rendered when user hits print -->
+    </div>
 
-        // Sample Austin Parcels Database
-        const PARCELS = {
-            '1201-e-6th': {
-                address: '1201 E 6th St, Austin, TX 78702',
-                apn: '0204050801',
-                lat: 30.264283,
-                lon: -97.728951,
-                zoning: 'CS-MU-CO-NP',
-                zoningName: 'Commercial Services - Mixed Use',
-                lotSqft: '18,450 sq ft',
-                lotAcres: '0.423 Acres',
-                frontage: '125 ft (E 6th St)',
-                maxHeight: '60 ft',
-                maxFar: '2.00 : 1',
-                maxImpervious: '80% Max',
-                setbacks: { front: '10 ft', side: '0 ft', streetside: '10 ft', rear: '0 ft' },
-                maxGfa: '36,900 sq ft',
-                maxUnits: '35 Units',
-                polygon: [
-                    [30.26460, -97.72930],
-                    [30.26460, -97.72860],
-                    [30.26390, -97.72860],
-                    [30.26390, -97.72930]
-                ],
-                buffer: [
-                    [30.26450, -97.72920],
-                    [30.26450, -97.72870],
-                    [30.26400, -97.72870],
-                    [30.26400, -97.72920]
+    <!-- Multi-City Database & Interactive Engine Logic -->
+    <script>
+        // Multi-City Zoning Intelligence Database (Austin, NYC, Miami, Dallas, LA)
+        const METRO_DATABASE = {
+            austin: {
+                cityName: "Austin, TX (Travis County)",
+                jurisdiction: "City of Austin Land Development Code (Title 25)",
+                parcels: [
+                    {
+                        id: "02040508190000",
+                        address: "2401 East 7th Street, Austin, TX",
+                        zoning: "CS-MU-V-NP",
+                        zoningDesc: "Commercial Services, Mixed Use, Vertical Mixed Use",
+                        acres: 1.84,
+                        sqft: 80150,
+                        baseFar: 1.2,
+                        bonusFar: 0.8,
+                        maxHeight: 60,
+                        potentialHeight: 90,
+                        coverage: 80,
+                        parking: "0 Stalls (Eliminated)",
+                        compatibility: "Single-family lot within 280 ft (§ 25-2-1063 triggers 40 ft rear step-down).",
+                        watershed: "Urban Watershed (Lady Bird Lake) — 80% Max Impervious Cover.",
+                        bonus: "Eligible for VMU2 / DB90 height bonus with 12% affordable units.",
+                        lat: 30.2612,
+                        lng: -97.7154,
+                        uses: [
+                            { name: "Multifamily Residential", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Ground-Floor Retail", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Medical / Dental Clinic", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Hotel / Hospitality", status: "Conditional Use", color: "text-amber-700" }
+                        ]
+                    },
+                    {
+                        id: "02090103110000",
+                        address: "1400 South Congress Ave, Austin, TX",
+                        zoning: "GR-MU-CO",
+                        zoningDesc: "Community Commercial, Mixed Use, Conditional Overlay",
+                        acres: 2.10,
+                        sqft: 91476,
+                        baseFar: 1.0,
+                        bonusFar: 1.0,
+                        maxHeight: 60,
+                        potentialHeight: 60,
+                        coverage: 75,
+                        parking: "0 Stalls (Parking Reform)",
+                        compatibility: "Adjacent to Bouldin Creek SF-3. Strict 60-ft height cap applies.",
+                        watershed: "Bouldin Creek Urban Watershed — 70% Max Impervious Cover.",
+                        bonus: "Eligible for South Congress Corridor Overlay density incentives.",
+                        lat: 30.2505,
+                        lng: -97.7495,
+                        uses: [
+                            { name: "Mixed-Use Residential", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Boutique Hotel", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Restaurant / Bar", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Drive-Through Facility", status: "Prohibited in CO", color: "text-accent-rust" }
+                        ]
+                    }
                 ]
             },
-            '2100-s-congress': {
-                address: '2100 S Congress Ave, Austin, TX 78704',
-                apn: '0402030402',
-                lat: 30.243500,
-                lon: -97.751200,
-                zoning: 'GR-MU-V-NP',
-                zoningName: 'Community Commercial - Vertical Mixed Use',
-                lotSqft: '26,100 sq ft',
-                lotAcres: '0.599 Acres',
-                frontage: '180 ft (S Congress)',
-                maxHeight: '60 ft',
-                maxFar: '2.50 : 1',
-                maxImpervious: '90% Max',
-                setbacks: { front: '10 ft', side: '0 ft', streetside: '10 ft', rear: '10 ft' },
-                maxGfa: '65,250 sq ft',
-                maxUnits: '62 Units',
-                polygon: [
-                    [30.24390, -97.75160],
-                    [30.24390, -97.75080],
-                    [30.24310, -97.75080],
-                    [30.24310, -97.75160]
-                ],
-                buffer: [
-                    [30.24380, -97.75150],
-                    [30.24380, -97.75090],
-                    [30.24320, -97.75090],
-                    [30.24320, -97.75150]
+            nyc: {
+                cityName: "New York, NY (Manhattan / Brooklyn)",
+                jurisdiction: "New York City Zoning Resolution (ZR § 23-154)",
+                parcels: [
+                    {
+                        id: "3021450012",
+                        address: "485 4th Avenue, Brooklyn, NY (Gowanus)",
+                        zoning: "M1-4/R7A",
+                        zoningDesc: "Gowanus Mixed Use District, Contextual Residential Overlay",
+                        acres: 0.72,
+                        sqft: 31363,
+                        baseFar: 4.0,
+                        bonusFar: 0.6,
+                        maxHeight: 95,
+                        potentialHeight: 115,
+                        coverage: 70,
+                        parking: "0 Stalls (Inner Transit Zone)",
+                        compatibility: "Subject to Gowanus Canal Special District Bulk Envelopes.",
+                        watershed: "DEP Combined Sewer Overflow (CSO) Detention Mandate Required.",
+                        bonus: "Mandatory Inclusionary Housing (MIH Option 1) with 25% affordable units at 60% AMI.",
+                        lat: 40.6720,
+                        lng: -73.9880,
+                        uses: [
+                            { name: "Contextual Multifamily", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Light Industrial Maker Space", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Ground Floor Commercial", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Self-Storage Facility", status: "Special Permit Only", color: "text-amber-700" }
+                        ]
+                    }
                 ]
             },
-            '4800-e-7th': {
-                address: '4800 E 7th St, Austin, TX 78702',
-                apn: '0207080905',
-                lat: 30.258500,
-                lon: -97.695200,
-                zoning: 'CS-CO-NP',
-                zoningName: 'Commercial Services - Conditional Overlay',
-                lotSqft: '34,800 sq ft',
-                lotAcres: '0.798 Acres',
-                frontage: '210 ft (E 7th St)',
-                maxHeight: '40 ft',
-                maxFar: '1.00 : 1',
-                maxImpervious: '70% Max',
-                setbacks: { front: '25 ft', side: '15 ft', streetside: '15 ft', rear: '20 ft' },
-                maxGfa: '34,800 sq ft',
-                maxUnits: '24 Units',
-                polygon: [
-                    [30.25900, -97.69580],
-                    [30.25900, -97.69460],
-                    [30.25800, -97.69460],
-                    [30.25800, -97.69580]
-                ],
-                buffer: [
-                    [30.25880, -97.69560],
-                    [30.25880, -97.69480],
-                    [30.25820, -97.69480],
-                    [30.25820, -97.69560]
+            miami: {
+                cityName: "Miami, FL (Miami-Dade)",
+                jurisdiction: "Miami 21 Zoning Code & Florida Live Local Act (SB 102)",
+                parcels: [
+                    {
+                        id: "01-3126-042-0190",
+                        address: "2850 Biscayne Boulevard, Miami, FL (Edgewater)",
+                        zoning: "T6-24-O",
+                        zoningDesc: "Transect Urban Core, 24 Stories Base Open Use",
+                        acres: 1.15,
+                        sqft: 50094,
+                        baseFar: 7.0,
+                        bonusFar: 2.0,
+                        maxHeight: 240,
+                        potentialHeight: 360,
+                        coverage: 80,
+                        parking: "1.0 Stall/unit (50% reduction in TOD)",
+                        compatibility: "Waterfront setback 50 ft applicable if within Biscayne Bay corridor.",
+                        watershed: "Miami-Dade DERM Class II Permit Required for Dewatering.",
+                        bonus: "Live Local Act (SB 102/328) preemption allows maximum municipal height & density.",
+                        lat: 25.8040,
+                        lng: -80.1895,
+                        uses: [
+                            { name: "High-Rise Multifamily", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Boutique Office", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Retail & Dining", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Industrial / Auto Repair", status: "Prohibited in T6", color: "text-accent-rust" }
+                        ]
+                    }
+                ]
+            },
+            dallas: {
+                cityName: "Dallas, TX (Dallas County)",
+                jurisdiction: "Dallas Development Code Chapter 51A & ForwardDallas 2.0",
+                parcels: [
+                    {
+                        id: "00000284792000000",
+                        address: "3200 Ross Avenue, Dallas, TX",
+                        zoning: "MU-3",
+                        zoningDesc: "Mixed Use 3 High-Density District",
+                        acres: 1.45,
+                        sqft: 63162,
+                        baseFar: 3.2,
+                        bonusFar: 0.8,
+                        maxHeight: 135,
+                        potentialHeight: 180,
+                        coverage: 80,
+                        parking: "1.25 Stalls/unit (Dallas Parking Reform pending)",
+                        compatibility: "Residential Proximity Slope (RPS) limits height on northern lot line.",
+                        watershed: "Trinity River Basin Drainage Study compliance required.",
+                        bonus: "Mixed-Income Housing Development Bonus yields +20% FAR.",
+                        lat: 32.7955,
+                        lng: -96.7865,
+                        uses: [
+                            { name: "Multifamily Apartments", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Office / Mixed Use", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Retail / Restaurant", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Heavy Commercial", status: "Prohibited", color: "text-accent-rust" }
+                        ]
+                    }
+                ]
+            },
+            la: {
+                cityName: "Los Angeles, CA (LA County)",
+                jurisdiction: "LAMC & California Housing Crisis Act (SB 423 & SB 330)",
+                parcels: [
+                    {
+                        id: "5534-012-004",
+                        address: "6200 Hollywood Blvd, Los Angeles, CA",
+                        zoning: "C4-2D-SN",
+                        zoningDesc: "Commercial District, Transit Oriented Communities (TOC) Tier 4",
+                        acres: 1.10,
+                        sqft: 47916,
+                        baseFar: 3.0,
+                        bonusFar: 1.5,
+                        maxHeight: 75,
+                        potentialHeight: 110,
+                        coverage: 75,
+                        parking: "0.5 Stalls/unit (TOC Tier 4 exemption)",
+                        compatibility: "Transitional Height restrictions within 100 ft of R1 lots.",
+                        watershed: "LID (Low Impact Development) Stormwater capture required.",
+                        bonus: "TOC Tier 4 grants 80% density increase and 33 ft height bonus by-right.",
+                        lat: 34.1015,
+                        lng: -118.3245,
+                        uses: [
+                            { name: "TOC Affordable Mixed-Use", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Creative Office", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Ground Floor Retail", status: "By-Right Permitted", color: "text-accent" },
+                            { name: "Drive-Through Food Service", status: "Prohibited in C4", color: "text-accent-rust" }
+                        ]
+                    }
                 ]
             }
         };
 
-        // Initialize Map
-        let map = L.map('map', { zoomControl: false }).setView([30.264283, -97.728951], 17);
-        L.control.zoom({ position: 'topright' }).addTo(map);
+        let currentCityKey = 'austin';
+        let currentParcel = METRO_DATABASE.austin.parcels[0];
+        let mapInstance = null;
+        let mapMarker = null;
+        let mapPolygon = null;
 
-        // Dark Matter Basemap Tiles
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; CartoDB &copy; OpenStreetMap',
-            maxZoom: 19
-        }).addTo(map);
+        // Initialize GIS Map
+        function initMap() {
+            if (mapInstance) return;
+            
+            // Custom clean warm map tiles (CartoDB Positron for architectural feel)
+            mapInstance = L.map('parcel-map', {
+                scrollWheelZoom: false
+            }).setView([currentParcel.lat, currentParcel.lng], 16);
 
-        let currentPolygon = null;
-        let currentBuffer = null;
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap contributors',
+                maxZoom: 19
+            }).addTo(mapInstance);
 
-        function renderParcelOnMap(data) {
-            if (currentPolygon) map.removeLayer(currentPolygon);
-            if (currentBuffer) map.removeLayer(currentBuffer);
-
-            // Parcel Outer Boundary (Emerald)
-            currentPolygon = L.polygon(data.polygon, {
-                color: '#10b981',
-                weight: 3,
-                fillColor: '#10b981',
-                fillOpacity: 0.2
-            }).addTo(map);
-
-            // Inner Setback Buildable Envelope (Amber)
-            currentBuffer = L.polygon(data.buffer, {
-                color: '#f59e0b',
-                weight: 2,
-                dashArray: '4, 4',
-                fillColor: '#f59e0b',
-                fillOpacity: 0.15
-            }).addTo(map);
-
-            map.flyTo([data.lat, data.lon], 17);
+            updateMapVisuals();
         }
 
-        function loadParcel(key) {
-            const data = PARCELS[key];
-            if (!data) return;
+        function updateMapVisuals() {
+            if (!mapInstance) return;
 
-            // Update UI elements
-            document.getElementById('search-input').value = data.address;
-            document.getElementById('parcel-address').innerText = data.address;
-            document.getElementById('parcel-apn').innerText = 'APN: ' + data.apn;
-            document.getElementById('zoning-code').innerText = data.zoning;
-            document.getElementById('lot-area').innerText = data.lotSqft;
-            document.getElementById('lot-acres').innerText = data.lotAcres;
-            document.getElementById('lot-frontage').innerText = data.frontage;
-            document.getElementById('max-height').innerText = data.maxHeight;
-            document.getElementById('max-far').innerText = data.maxFar;
-            document.getElementById('max-impervious').innerText = data.maxImpervious;
-            document.getElementById('setback-front').innerText = data.setbacks.front;
-            document.getElementById('setback-side').innerText = data.setbacks.side;
-            document.getElementById('setback-streetside').innerText = data.setbacks.streetside;
-            document.getElementById('setback-rear').innerText = data.setbacks.rear;
-            document.getElementById('max-gfa').innerText = data.maxGfa;
-            document.getElementById('max-units').innerText = data.maxUnits;
+            if (mapMarker) mapInstance.removeLayer(mapMarker);
+            if (mapPolygon) mapInstance.removeLayer(mapPolygon);
 
-            // Update Memo Modal
-            document.getElementById('memo-address').innerText = data.address;
-            document.getElementById('memo-apn').innerText = data.apn;
-            document.getElementById('memo-land-area').innerText = data.lotSqft + ' (' + data.lotAcres + ')';
+            // Center map
+            mapInstance.setView([currentParcel.lat, currentParcel.lng], 16);
 
-            renderParcelOnMap(data);
+            // Add marker with custom SVG icon
+            const customIcon = L.divIcon({
+                className: 'custom-map-icon',
+                html: `<div style="background-color: #1b4332; color: white; border: 2px solid white; border-radius: 4px; padding: 4px 8px; font-family: monospace; font-size: 11px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.15);">
+                        ${currentParcel.zoning}
+                       </div>`,
+                iconSize: [80, 30],
+                iconAnchor: [40, 15]
+            });
+
+            mapMarker = L.marker([currentParcel.lat, currentParcel.lng], { icon: customIcon }).addTo(mapInstance);
+
+            // Draw a realistic parcel boundary box
+            const delta = 0.0018;
+            const bounds = [
+                [currentParcel.lat - delta * 0.7, currentParcel.lng - delta],
+                [currentParcel.lat - delta * 0.7, currentParcel.lng + delta],
+                [currentParcel.lat + delta * 0.7, currentParcel.lng + delta],
+                [currentParcel.lat + delta * 0.7, currentParcel.lng - delta]
+            ];
+
+            mapPolygon = L.polygon(bounds, {
+                color: '#1b4332',
+                weight: 2.5,
+                fillColor: '#1b4332',
+                fillOpacity: 0.15,
+                dashArray: '4, 4'
+            }).addTo(mapInstance);
         }
 
-        // Initialize with first parcel
-        loadParcel('1201-e-6th');
+        // City Selector Handler
+        function selectCity(cityKey) {
+            currentCityKey = cityKey;
+            
+            // Update tab styles
+            const tabs = ['austin', 'nyc', 'miami', 'dallas', 'la'];
+            tabs.forEach(tab => {
+                const btn = document.getElementById(`tab-${tab}`);
+                if (tab === cityKey) {
+                    btn.className = "px-3 py-1.5 rounded font-medium transition-all bg-accent text-white shadow-sm";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded font-medium transition-all text-ink-muted hover:text-ink";
+                }
+            });
 
-        // Modal Controls
+            // Populate parcel dropdown
+            const dropdown = document.getElementById('parcel-dropdown');
+            dropdown.innerHTML = '';
+            METRO_DATABASE[cityKey].parcels.forEach((p, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = `${p.address} (${p.zoning})`;
+                dropdown.appendChild(opt);
+            });
+
+            currentParcel = METRO_DATABASE[cityKey].parcels[0];
+            updateDisplay();
+        }
+
+        function handleParcelChange(index) {
+            currentParcel = METRO_DATABASE[currentCityKey].parcels[index];
+            updateDisplay();
+        }
+
+        // Update UI Elements with current parcel data
+        function updateDisplay() {
+            // Update scorecard values
+            document.getElementById('card-city-name').textContent = METRO_DATABASE[currentCityKey].cityName;
+            document.getElementById('card-parcel-address').textContent = currentParcel.address;
+            document.getElementById('card-parcel-id').textContent = `Parcel ID: ${currentParcel.id}`;
+            document.getElementById('card-zoning-code').textContent = currentParcel.zoning;
+            document.getElementById('card-site-area').textContent = `${currentParcel.acres} Acres`;
+            document.getElementById('card-site-sqft').textContent = `(${currentParcel.sqft.toLocaleString()} SF)`;
+
+            // Slider max constraints
+            document.getElementById('slider-height').max = currentParcel.potentialHeight || 120;
+            document.getElementById('slider-height').value = currentParcel.maxHeight;
+            document.getElementById('slider-height-val').textContent = `${currentParcel.maxHeight} ft`;
+            document.getElementById('slider-max-height-label').textContent = `Max Code Allowed: ${currentParcel.potentialHeight || currentParcel.maxHeight} ft`;
+
+            document.getElementById('flag-compatibility-text').textContent = currentParcel.compatibility;
+            document.getElementById('flag-watershed-text').textContent = currentParcel.watershed;
+            document.getElementById('flag-bonus-text').textContent = currentParcel.bonus;
+            document.getElementById('card-parking-mandate').textContent = currentParcel.parking;
+
+            // Permitted Uses
+            const usesContainer = document.getElementById('permitted-uses-grid');
+            usesContainer.innerHTML = '';
+            currentParcel.uses.forEach(u => {
+                const div = document.createElement('div');
+                div.className = "p-2 bg-paper-top border border-paper-border rounded flex justify-between items-center";
+                div.innerHTML = `<span class="text-ink font-medium">${u.name}</span> <span class="${u.color} font-semibold text-[11px]">${u.status}</span>`;
+                usesContainer.appendChild(div);
+            });
+
+            updateCalculations();
+            updateMapVisuals();
+            lucide.createIcons();
+        }
+
+        // Live Yield & Massing Calculations (TestFit + Deepblocks benchmarked)
+        function updateCalculations() {
+            const height = parseInt(document.getElementById('slider-height').value);
+            const coverage = parseInt(document.getElementById('slider-coverage').value) / 100;
+            
+            document.getElementById('slider-height-val').textContent = `${height} ft`;
+            document.getElementById('slider-coverage-val').textContent = `${Math.round(coverage * 100)}%`;
+
+            // TestFit GSF formula: Lot Area * Total Stacked FAR
+            const totalFar = currentParcel.baseFar + currentParcel.bonusFar;
+            const maxGsf = Math.round(currentParcel.sqft * totalFar);
+            const unitYield = Math.round((maxGsf * 0.85) / 825); // 85% efficiency, 825 avg SF
+
+            document.getElementById('card-max-gsf').textContent = `${maxGsf.toLocaleString()} GSF`;
+            document.getElementById('card-unit-yield').textContent = `${unitYield} Units`;
+
+            // Stacked FAR Bar calculation
+            document.getElementById('stacked-far-total').textContent = `${totalFar.toFixed(1)}:1 Total FAR`;
+            const basePct = (currentParcel.baseFar / totalFar) * 100;
+            const bonusPct = (currentParcel.bonusFar / totalFar) * 100;
+
+            document.getElementById('bar-base-far').style.width = `${basePct}%`;
+            document.getElementById('bar-bonus-far').style.width = `${bonusPct}%`;
+            document.getElementById('legend-base-far').textContent = currentParcel.baseFar.toFixed(1);
+            document.getElementById('legend-bonus-far').textContent = currentParcel.bonusFar.toFixed(1);
+
+            // Update Modal Memo Content
+            document.getElementById('memo-site-title').textContent = currentParcel.address;
+            document.getElementById('memo-lot-size').textContent = `${currentParcel.acres} AC (${currentParcel.sqft.toLocaleString()} SF)`;
+            document.getElementById('memo-far').textContent = `${currentParcel.baseFar.toFixed(1)} Base / ${totalFar.toFixed(1)} Stacked FAR`;
+            document.getElementById('memo-gsf').textContent = `${maxGsf.toLocaleString()} GSF`;
+            document.getElementById('memo-units').textContent = `${unitYield} Units`;
+            document.getElementById('memo-jurisdiction').textContent = METRO_DATABASE[currentCityKey].jurisdiction;
+            document.getElementById('memo-zoning').textContent = `${currentParcel.zoning} (${currentParcel.zoningDesc})`;
+            document.getElementById('memo-height').textContent = `${height} ft (Up to ${currentParcel.potentialHeight || height} ft with Bonus)`;
+            document.getElementById('memo-parking').textContent = currentParcel.parking;
+        }
+
+        // Modal Handlers
         function openMemoModal() {
             document.getElementById('memo-modal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
             lucide.createIcons();
         }
 
         function closeMemoModal() {
             document.getElementById('memo-modal').classList.add('hidden');
-            document.body.style.overflow = 'auto';
         }
 
-        // Search Action
-        document.getElementById('analyze-btn').addEventListener('click', () => {
-            const input = document.getElementById('search-input').value.toLowerCase();
-            if (input.includes('congress')) {
-                loadParcel('2100-s-congress');
-            } else if (input.includes('7th')) {
-                loadParcel('4800-e-7th');
-            } else {
-                loadParcel('1201-e-6th');
-            }
-            document.getElementById('demo').scrollIntoView({ behavior: 'smooth' });
+        // Close on Escape key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeMemoModal();
+        });
+
+        // Initialize on DOM load
+        document.addEventListener('DOMContentLoaded', () => {
+            selectCity('austin');
+            initMap();
+            lucide.createIcons();
         });
     </script>
 </body>

@@ -1,101 +1,75 @@
-# 🏛️ ZoneMemo AI
+# 🏛️ ZoneMemo AI — Institutional US Zoning Feasibility Studio
 
-**Automated US Zoning & Entitlement Feasibility Intelligence SaaS**  
-*Turning 800-Page Municipal Codes into a 5-Page Feasibility Memo in 60 Seconds.*
+**Automated US Municipal Zoning, Entitlement Intelligence & Deal Triage Platform**  
+*Turning 800-Page Municipal Codes into an Institutional 5-Page Feasibility Memo in 60 Seconds.*
 
----
-
-## 📌 Overview
-
-ZoneMemo AI is a B2B proptech platform engineered for **US Real Estate Developers, Land Acquisition Analysts, and Commercial Land Brokers**. 
-
-Before buying land or drafting architectural blueprints, developers must know what the municipal code allows. Instead of paying land-use attorneys **$3,500** and waiting **2 weeks**, ZoneMemo AI screens parcel envelopes, by-right permitted uses, maximum building heights, setbacks, and Stacked FAR in **under 60 seconds**.
-
-### 🌟 Current Launch Pilot: **Austin, Texas (Travis County)**
-- **GIS Cadastre Ingestion:** Live Travis County (TCAD) parcel boundaries and acreages.
-- **Deterministic Zoning Engine:** Austin Land Development Code (Title 25 Table 25-2-492) base standards, compatibility height step-downs (§ 25-2-1063), and urban watershed impervious cover caps.
-- **Institutional 5-Page Memo:** 1-Click print/PDF export ready to share with investment committees and capital partners.
+[![Live Platform](https://img.shields.io/badge/Live-Vercel%20Production-10b981?style=for-the-badge&logo=vercel)](https://zonememo-ai.vercel.app/)
+[![GitHub Pages](https://img.shields.io/badge/Mirror-GitHub%20Pages-blue?style=for-the-badge&logo=github)](https://hardikag104.github.io/zonememo-ai/)
 
 ---
 
-## 🚀 How to Run Locally
+## 📌 Executive Overview
 
-You only need **Python** (which is already installed on your computer):
+**ZoneMemo AI** is a B2B proptech platform engineered for **US Commercial Real Estate Developers, Land Acquisition Analysts, and Land Brokers**.
+
+Before purchasing land or entering into an LOI, real estate investment committees must understand municipal code feasibility. Instead of spending **$3,500** on outside land-use counsel and waiting **14 business days**, ZoneMemo AI screens parcel envelopes, compatibility step-downs, and stacked FAR in **under 60 seconds**.
+
+---
+
+## 🌟 Multi-City US Zoning Cadastres Ingested
+
+ZoneMemo AI models deterministic municipal codes across the nation's highest-velocity development corridors:
+
+| Metro Area | Governing Municipal Code | Key Feasibility Engines |
+| :--- | :--- | :--- |
+| **Austin, Texas** | City of Austin Land Development Code (Title 25) | § 25-2-1063 Compatibility Step-Downs, Urban Watershed 80% Impervious Cover, HOME Phase 2 |
+| **New York City** | NYC Zoning Resolution (ZR § 23-154) | R6–R10 Quality Housing Program, Sky Exposure Planes, Mandatory Inclusionary Housing (MIH) |
+| **Miami, Florida** | Miami 21 Transect Code & FL SB 102 | T6-8-O / T6-24-O, Waterfront Setbacks, **Live Local Act (SB 102/328)** Density Preemption |
+| **Dallas, Texas** | Dallas City Code Chapter 51A | Mixed-Use MU-3, ForwardDallas 2.0, Residential Proximity Slope (RPS) |
+| **Los Angeles, CA** | LA Municipal Code & CA SB 423 | Transit Oriented Communities (TOC Tiers 1–4) 80% density bonus, 60-day ministerial CEQA exemption |
+
+---
+
+## 🚀 Key Feature Matrix (Benchmarked from Proptech Leaders)
+
+* **Generative Building Massing (TestFit™ Inspired):** Dynamic calculations for Gross Square Footage (GSF), Footprint Coverage, and unit mix yield.
+* **Stacked FAR Visualizer (Deepblocks™ Inspired):** Visual breakdown of Base FAR, Affordable Housing Density Bonus FAR, and Transit Oriented Bonuses.
+* **Compatibility & Step-Down Buffer (Gridics™ Inspired):** Automated detection of acute height step-downs when adjacent to single-family residential districts.
+* **By-Right Permitted Uses Matrix (Zoneomics™ Inspired):** Instant audit of permitted residential, commercial, and special uses under municipal code.
+* **1-Click Institutional Feasibility Memo:** Clean, IC-ready printable PDF memo designed for investment committees and capital partners.
+
+---
+
+## 🎨 Editorial Design System (Inspired by Shyft Studio)
+* **Warm Editorial Paper Canvas:** `#f6f3eb` base paired with architectural deep carbon ink (`#15120e`) and tactile grain.
+* **Typography:** `Newsreader` & `Instrument Serif` editorial display paired with `JetBrains Mono` technical data figures.
+* **Numbered Section Flow:** `01 The Gap`, `02 Live Engine`, `03 US Cadastre`, `04 Due Diligence Matrix`, `05 Access`.
+
+---
+
+## 💻 Local Development
+
+Run locally with Python (zero external dependencies required):
 
 ```bash
-# 1. Navigate to the project directory
-cd C:\Users\hardi\.gemini\antigravity\scratch\zonememo-ai
+# 1. Clone repository
+git clone https://github.com/hardikag104/zonememo-ai.git
+cd zonememo-ai
 
-# 2. Run the local development server
+# 2. Start local server
 python server.py
 ```
 
-Your web browser will automatically open to:
+Browser will open automatically to:  
 👉 **`http://localhost:8000`**
 
 ---
 
-## 📤 How to Push This Project to Your GitHub Account
-
-Follow these quick steps to push this code directly to your new GitHub account:
-
-### Step 1: Install Git (If not already installed)
-Download and install Git for Windows from: [https://git-scm.com/download/win](https://git-scm.com/download/win)
-
-### Step 2: Create a New Repository on GitHub
-1. Go to [github.com](https://github.com) and log into your account.
-2. Click the green **"New"** button (or go to `https://github.com/new`).
-3. Repository name: `zonememo-ai`
-4. Visibility: **Public** (or Private).
-5. Leave "Add a README file" unchecked (we already created one!).
-6. Click **"Create repository"**.
-
-### Step 3: Push Your Code from Terminal
-Open PowerShell or Command Prompt, run these commands:
-
-```bash
-cd C:\Users\hardi\.gemini\antigravity\scratch\zonememo-ai
-
-# Initialize git repository
-git init
-
-# Add all project files
-git add .
-
-# Create initial commit
-git commit -m "feat: launch ZoneMemo AI platform and Austin pilot demo"
-
-# Link to your new GitHub repository (replace YOUR-USERNAME with your actual GitHub username)
-git remote add origin https://github.com/YOUR-USERNAME/zonememo-ai.git
-
-# Push the code to GitHub
-git branch -M main
-git push -u origin main
-```
+## 💼 Business & Monetization Architecture
+* **Single Deal Triage:** $149 / single memo
+* **Acquisitions Pipeline:** $399 / month (10 full memos/mo)
+* **Institutional Studio:** $899 / month (Unlimited runs, 5 analyst seats, custom municipal ingestion)
 
 ---
 
-## 🌐 How to Deploy It Live Online for Free
-
-Once your code is pushed to GitHub, you can put it live on the internet so anyone in the US can visit it:
-
-### Option A: 1-Click Free Hosting on Vercel (Recommended)
-1. Go to [vercel.com](https://vercel.com) and sign in using your **GitHub account**.
-2. Click **"Add New..."** $\to$ **"Project"**.
-3. Select your `zonememo-ai` repository and click **"Deploy"**.
-4. Within 30 seconds, your site is live with a free custom link like:  
-   👉 `https://zonememo-ai.vercel.app`
-
-### Option B: Free GitHub Pages
-1. On your GitHub repository page, go to **Settings** $\to$ **Pages**.
-2. Under **Build and deployment** > **Source**, choose **Deploy from a branch**.
-3. Select branch: `main` and folder `/ (root)`, then click **Save**.
-4. Your site will be live at: `https://YOUR-USERNAME.github.io/zonememo-ai/`
-
----
-
-## 💼 Business & Monetization Model
-- **Pay-Per-Report:** $149 / single deal triage
-- **Growth Pipeline:** $399 / month (3 full memos/mo)
-- **Pro Team:** $799 / month (8 full memos/mo with white-label broker branding)
-- **Payment Stack:** Paddle (Merchant of Record) + Skydo (Inward USD to Indian Bank Account)
+© 2026 ZoneMemo AI Feasibility Studio. All rights reserved.
